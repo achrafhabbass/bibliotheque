@@ -1,0 +1,149 @@
+# ─────────────────────────────────────────────────────────────
+#  Pipeline Travis CI pour BiblioGest
+#  Syntaxe historique – la plus concise des cinq moteurs.
+#  Démontre les concepts Travis : language, jdk, services,
+#  stages (jobs.include), env, conditions.
+# ─────────────────────────────────────────────────────────────
+
+language: java
+jdk: openjdk17
+dist: jammy
+
+services:
+  - docker
+
+# Cache du repository Maven entre builds
+cache:
+  directories:
+    - $HOME/.m2
+
+# Variables d'environnement globales (à définir dans Travis UI)
+# Settings → Environment Variables :
+#   DOCKER_USERNAME, DOCKER_PASSWORD,
+#   SONAR_TOKEN, SONAR_PROJECT_KEY, SONAR_ORGANIZATION,
+#   SLACK_WEBHOOK_URL
+
+env:
+  global:
+    - IMAGE_NAME=bibliotheque
+    - MAVEN_OPTS="-Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=WARN"
+
+# ─────────────────────────────────────────────
+# Stages : exécutés séquentiellement
+# Jobs dans un même stage : exécutés en parallèle
+# ─────────────────────────────────────────────
+stages:
+  - lint
+  - test
+  - name: quality
+    if: branch = main
+  - package
+  - name: docker
+    if: branch = main
+  - name: security
+    if: branch = main
+  - name: notify
+    if: branch = main
+
+jobs:
+  include:
+
+    # ─────────────────────────────────────────
+    # Stage 1 : Lint
+    # ─────────────────────────────────────────
+    - stage: lint
+      name: "Checkstyle + SpotBugs"
+      script:
+        - mvn -B checkstyle:check --no-transfer-progress
+        - mvn -B compile -DskipTests --no-transfer-progress
+        - mvn -B spotbugs:check --no-transfer-progress || true
+
+    # ─────────────────────────────────────────
+    # Stage 2 : Tests
+    # ─────────────────────────────────────────
+    - stage: test
+      name: "Tests unitaires + intégration"
+      script:
+        - mvn -B verify --no-transfer-progress
+      after_success:
+        - bash <(curl -s https://codecov.io/bash) || true
+
+    # ─────────────────────────────────────────
+    # Stage 3 : SonarCloud (main uniquement)
+    # ─────────────────────────────────────────
+    - stage: quality
+      name: "Analyse SonarCloud"
+      script:
+        - mvn -B verify sonar:sonar
+          -Dsonar.projectKey=$SONAR_PROJECT_KEY
+          -Dsonar.organization=$SONAR_ORGANIZATION
+          -Dsonar.host.url=https://sonarcloud.io
+          -Dsonar.token=$SONAR_TOKEN
+          --no-transfer-progress
+
+    # ─────────────────────────────────────────
+    # Stage 4 : Package
+    # ─────────────────────────────────────────
+    - stage: package
+      name: "Build du WAR"
+      script:
+        - mvn -B package -DskipTests --no-transfer-progress
+      workspaces:
+        create:
+          name: war-artifact
+          paths:
+            - target/bibliotheque.war
+
+    # ─────────────────────────────────────────
+    # Stage 5 : Docker build & push (main uniquement)
+    # ─────────────────────────────────────────
+    - stage: docker
+      name: "Docker build & push"
+      workspaces:
+        use: war-artifact
+      script:
+        - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+        - docker build -t $DOCKER_USERNAME/$IMAGE_NAME:$TRAVIS_COMMIT
+                       -t $DOCKER_USERNAME/$IMAGE_NAME:latest .
+        - docker push $DOCKER_USERNAME/$IMAGE_NAME:$TRAVIS_COMMIT
+        - docker push $DOCKER_USERNAME/$IMAGE_NAME:latest
+
+    # ─────────────────────────────────────────
+    # Stage 6 : Scan sécurité Trivy
+    # ─────────────────────────────────────────
+    - stage: security
+      name: "Scan Trivy"
+      script:
+        - docker run --rm aquasec/trivy:latest image
+            --severity CRITICAL,HIGH
+            --ignore-unfixed
+            --exit-code 0
+            $DOCKER_USERNAME/$IMAGE_NAME:latest
+
+    # ─────────────────────────────────────────
+    # Stage 7 : Notification Slack
+    # ─────────────────────────────────────────
+    - stage: notify
+      name: "Notification Slack"
+      script:
+        - |
+          if [ -n "$SLACK_WEBHOOK_URL" ]; then
+            curl -X POST -H 'Content-type: application/json' \
+              --data "{
+                \"attachments\": [{
+                  \"color\": \"good\",
+                  \"text\": \"✅ Pipeline RÉUSSIE - BiblioGest - $TRAVIS_BRANCH @ $TRAVIS_COMMIT - $TRAVIS_BUILD_WEB_URL\"
+                }]
+              }" \
+              "$SLACK_WEBHOOK_URL"
+          else
+            echo "SLACK_WEBHOOK_URL non défini, skip notification."
+          fi
+
+# ─────────────────────────────────────────────
+# Notifications Travis natives (en plus de Slack)
+# ─────────────────────────────────────────────
+notifications:
+  email:
+    on_success: change
+    on_failure: always

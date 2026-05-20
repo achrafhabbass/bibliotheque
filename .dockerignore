@@ -1,0 +1,15 @@
+target/
+.git/
+.github/
+.gitlab-ci.yml
+Jenkinsfile
+.circleci/
+.travis.yml
+.idea/
+.vscode/
+*.iml
+*.log
+cicd/
+node_modules/
+README.md
+CICD-README.md

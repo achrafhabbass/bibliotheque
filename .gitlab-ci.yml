@@ -1,0 +1,180 @@
+# ─────────────────────────────────────────────────────────────
+#  Pipeline GitLab CI/CD pour BiblioGest
+#  Équivalent fonctionnel du workflow GitHub Actions.
+#  Stages : lint → test → quality → package → docker → security → notify
+# ─────────────────────────────────────────────────────────────
+
+stages:
+  - lint
+  - test
+  - quality
+  - package
+  - docker
+  - security
+  - notify
+
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=WARN"
+  MAVEN_CLI_OPTS: "--batch-mode --errors --no-transfer-progress"
+  IMAGE_NAME: "bibliotheque"
+  DOCKER_HUB_IMAGE: "$DOCKER_USERNAME/$IMAGE_NAME"
+
+# Cache Maven partagé entre tous les jobs Maven
+.maven-cache: &maven-cache
+  cache:
+    key: "$CI_COMMIT_REF_SLUG-maven"
+    paths:
+      - .m2/repository
+
+# Image Java par défaut
+default:
+  image: eclipse-temurin:17-jdk
+
+# ─────────────────────────────────────────────
+# Stage 1 : Lint Checkstyle + SpotBugs
+# ─────────────────────────────────────────────
+lint:checkstyle:
+  stage: lint
+  <<: *maven-cache
+  script:
+    - mvn $MAVEN_CLI_OPTS checkstyle:check
+  artifacts:
+    when: always
+    paths:
+      - target/checkstyle-result.xml
+    expire_in: 1 week
+
+lint:spotbugs:
+  stage: lint
+  <<: *maven-cache
+  script:
+    - mvn $MAVEN_CLI_OPTS compile -DskipTests
+    - mvn $MAVEN_CLI_OPTS spotbugs:check
+  artifacts:
+    when: always
+    paths:
+      - target/spotbugsXml.xml
+    expire_in: 1 week
+  allow_failure: true
+
+# ─────────────────────────────────────────────
+# Stage 2 : Tests unitaires + intégration
+# ─────────────────────────────────────────────
+test:
+  stage: test
+  <<: *maven-cache
+  script:
+    - mvn $MAVEN_CLI_OPTS verify
+  artifacts:
+    when: always
+    paths:
+      - target/surefire-reports/
+      - target/failsafe-reports/
+      - target/site/jacoco/
+    reports:
+      junit:
+        - target/surefire-reports/TEST-*.xml
+        - target/failsafe-reports/TEST-*.xml
+    expire_in: 1 week
+  coverage: '/Total.*?([0-9]{1,3})%/'
+
+# ─────────────────────────────────────────────
+# Stage 3 : Analyse qualité SonarCloud
+# Uniquement sur main.
+# ─────────────────────────────────────────────
+quality:sonarcloud:
+  stage: quality
+  <<: *maven-cache
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  script:
+    - mvn $MAVEN_CLI_OPTS verify sonar:sonar
+        -Dsonar.projectKey=$SONAR_PROJECT_KEY
+        -Dsonar.organization=$SONAR_ORGANIZATION
+        -Dsonar.host.url=https://sonarcloud.io
+        -Dsonar.token=$SONAR_TOKEN
+
+# ─────────────────────────────────────────────
+# Stage 4 : Build du WAR
+# ─────────────────────────────────────────────
+package:war:
+  stage: package
+  <<: *maven-cache
+  script:
+    - mvn $MAVEN_CLI_OPTS package -DskipTests
+  artifacts:
+    name: "bibliotheque-war-$CI_COMMIT_SHORT_SHA"
+    paths:
+      - target/bibliotheque.war
+    expire_in: 7 days
+
+# ─────────────────────────────────────────────
+# Stage 5 : Build et push de l'image Docker
+# Docker-in-Docker (DinD).
+# ─────────────────────────────────────────────
+docker:build-push:
+  stage: docker
+  image: docker:24
+  services:
+    - docker:24-dind
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  needs:
+    - job: package:war
+      artifacts: true
+  variables:
+    DOCKER_TLS_CERTDIR: "/certs"
+  before_script:
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  script:
+    - docker build -t $DOCKER_HUB_IMAGE:$CI_COMMIT_SHA -t $DOCKER_HUB_IMAGE:latest .
+    - docker push $DOCKER_HUB_IMAGE:$CI_COMMIT_SHA
+    - docker push $DOCKER_HUB_IMAGE:latest
+
+# ─────────────────────────────────────────────
+# Stage 6 : Scan sécurité Trivy
+# ─────────────────────────────────────────────
+security:trivy:
+  stage: security
+  image:
+    name: aquasec/trivy:latest
+    entrypoint: [""]
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  needs:
+    - docker:build-push
+  script:
+    - trivy image --severity CRITICAL,HIGH --ignore-unfixed --exit-code 0 $DOCKER_HUB_IMAGE:latest
+    - trivy image --format json -o trivy-report.json $DOCKER_HUB_IMAGE:latest
+  artifacts:
+    when: always
+    paths:
+      - trivy-report.json
+    expire_in: 1 week
+  allow_failure: true
+
+# ─────────────────────────────────────────────
+# Stage 7 : Notification Slack
+# ─────────────────────────────────────────────
+notify:slack:
+  stage: notify
+  image: curlimages/curl:latest
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main" && $SLACK_WEBHOOK_URL'
+      when: always
+  script:
+    - |
+      if [ "$CI_JOB_STATUS" = "success" ] || [ -z "$CI_JOB_STATUS" ]; then
+        STATUS="✅ RÉUSSIE"; COLOR="good"
+      else
+        STATUS="❌ ÉCHOUÉE"; COLOR="danger"
+      fi
+      curl -X POST -H 'Content-type: application/json' \
+        --data "{
+          \"attachments\": [{
+            \"color\": \"$COLOR\",
+            \"text\": \"$STATUS - BiblioGest - $CI_COMMIT_REF_NAME @ $CI_COMMIT_SHORT_SHA - $CI_PIPELINE_URL\"
+          }]
+        }" \
+        "$SLACK_WEBHOOK_URL"
+  allow_failure: true

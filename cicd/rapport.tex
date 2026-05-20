@@ -1,0 +1,1538 @@
+\documentclass[12pt,a4paper]{report}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage[top=2.5cm,bottom=2.5cm,left=3cm,right=2.5cm]{geometry}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{setspace}
+\usepackage{parskip}
+\usepackage{enumitem}
+\usepackage{mdframed}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, fit, backgrounds}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!60!black,
+    urlcolor=blue!60!black,
+    citecolor=blue!60!black
+}
+
+% ── Code listings ─────────────────────────────────────────────────────────────
+\definecolor{codebg}{RGB}{248,248,248}
+\definecolor{codeframe}{RGB}{200,200,200}
+\definecolor{keyword}{RGB}{0,0,180}
+\definecolor{comment}{RGB}{80,120,80}
+\definecolor{string}{RGB}{160,32,32}
+
+\lstset{
+    backgroundcolor=\color{codebg},
+    frame=single,
+    rulecolor=\color{codeframe},
+    basicstyle=\ttfamily\footnotesize,
+    keywordstyle=\color{keyword}\bfseries,
+    commentstyle=\color{comment}\itshape,
+    stringstyle=\color{string},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    numbersep=8pt,
+    breaklines=true,
+    captionpos=b,
+    showstringspaces=false,
+    tabsize=2
+}
+
+\lstdefinelanguage{YAML}{
+  keywords={true,false,null,on,off},
+  keywordstyle=\color{keyword}\bfseries,
+  sensitive=false,
+  comment=[l]{\#},
+  commentstyle=\color{comment}\itshape,
+  stringstyle=\color{string},
+  morestring=[b]',
+  morestring=[b]"
+}
+
+\lstdefinelanguage{Groovy}{
+  keywords={pipeline, agent, environment, stages, stage, steps, post, when,
+            branch, sh, parallel, always, success, failure, unstable,
+            credentials, tools, options, def, if, else, return},
+  keywordstyle=\color{keyword}\bfseries,
+  sensitive=true,
+  comment=[l]{//},
+  commentstyle=\color{comment}\itshape,
+  stringstyle=\color{string},
+  morestring=[b]',
+  morestring=[b]"
+}
+
+% ── En-têtes ──────────────────────────────────────────────────────────────────
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\leftmark}
+\fancyhead[R]{\small BiblioGest CI/CD}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ── Titres de chapitres ───────────────────────────────────────────────────────
+\titleformat{\chapter}[block]
+  {\normalfont\Large\bfseries\color{blue!50!black}}
+  {\thechapter.}{0.8em}{}
+\titlespacing*{\chapter}{0pt}{10pt}{20pt}
+
+\onehalfspacing
+
+% ══════════════════════════════════════════════════════════════════════════════
+\begin{document}
+
+% ── Page de titre ─────────────────────────────────────────────────────────────
+\begin{titlepage}
+\centering
+\vspace*{1cm}
+{\scshape\Large Rapport de Projet\par}
+\vspace{0.3cm}
+{\large Module~: Gestion des Projets IT\par}
+\vspace{1.5cm}
+{\Huge\bfseries Pipeline CI/CD Moderne Multi-Outils\par}
+\vspace{0.5cm}
+{\large Sujet 1~-- Application sur le projet BiblioGest\par}
+\vspace{1.8cm}
+\rule{\textwidth}{0.5pt}
+\vspace{0.4cm}
+{\large\bfseries GitHub Actions $\cdot$ GitLab CI/CD $\cdot$ Jenkins $\cdot$ CircleCI $\cdot$ Travis CI \\
+Docker $\cdot$ SonarCloud / SonarQube $\cdot$ Trivy $\cdot$ Slack\par}
+\vspace{0.4cm}
+\rule{\textwidth}{0.5pt}
+\vspace{2cm}
+
+\begin{minipage}{0.45\textwidth}
+\raggedright
+\textbf{Filière~:} Génie Logiciel\\
+\textbf{Module~:} Gestion des Projets IT
+\end{minipage}
+\hfill
+\begin{minipage}{0.45\textwidth}
+\raggedleft
+\textbf{Année universitaire~:} 2025--2026
+\end{minipage}
+
+\vfill
+{\large\today\par}
+\end{titlepage}
+
+% ── Résumé ────────────────────────────────────────────────────────────────────
+\chapter*{Résumé}
+\addcontentsline{toc}{chapter}{Résumé}
+
+Ce rapport présente la mise en \oe{}uvre d'une pipeline complète d'intégration
+et de déploiement continus (CI/CD) pour une application Jakarta~EE de gestion
+de bibliothèques, BiblioGest. L'objectif est d'automatiser l'ensemble du cycle
+de vie logiciel~: analyse statique (lint), tests unitaires et d'intégration,
+analyse qualité, packaging, containerisation, scan de sécurité et notification.
+
+La même logique est implémentée sur cinq moteurs CI/CD distincts -- \textbf{GitHub Actions},
+\textbf{GitLab CI/CD}, \textbf{Jenkins}, \textbf{CircleCI} et \textbf{Travis CI} --
+afin de comparer concrètement leurs syntaxes, leurs paradigmes et leurs
+écosystèmes. La qualité du code est analysée par \textbf{SonarCloud} (mode SaaS)
+ainsi que par une instance \textbf{SonarQube} auto-hébergée (mode on-premise),
+les deux modes étant comparés en termes de coût, de maintenance et de
+confidentialité. Le \textbf{Dockerfile multi-stage} produit une image runtime
+allégée, l'image est scannée par \textbf{Trivy} (CVE), publiée simultanément
+sur \textbf{Docker Hub} et \textbf{GitHub Container Registry}, et le résultat
+final du pipeline est notifié à l'équipe via \textbf{Slack}.
+
+Les tests, rédigés avec JUnit~5 et Mockito, couvrent la logique métier sans
+aucune dépendance à la base de données Oracle, ce qui les rend exécutables en
+quelques secondes sur n'importe quel runner CI/CD.
+
+\tableofcontents
+\listoffigures
+\listoftables
+
+% ══════════════════════════════════════════════════════════════════════════════
+\chapter{Introduction}
+
+\section{Contexte et motivation}
+
+Le développement logiciel moderne fait face à une contradiction bien connue~:
+plus un projet grandit, plus les tâches répétitives (compilation, exécution des
+tests, déploiement) deviennent chronophages et sujettes aux erreurs humaines.
+L'intégration continue (CI) et le déploiement continu (CD) constituent la
+réponse industrielle à ce problème.
+
+L'idée fondatrice remonte aux pratiques Extreme Programming des années~2000,
+popularisées notamment par Martin Fowler. Elle consiste à fusionner
+fréquemment les modifications de code dans une branche principale et à
+déclencher automatiquement une série de vérifications à chaque intégration.
+Lorsqu'on étend cette logique jusqu'à la mise en production automatique, on
+parle de déploiement continu.
+
+\section{Objectifs du projet}
+
+Le sujet retenu pour le projet du module \emph{Gestion des Projets IT} est le
+\textbf{Sujet 1~-- CI/CD moderne multi-outils}. Ses objectifs explicites sont~:
+
+\begin{enumerate}[leftmargin=*, label=\arabic*.]
+  \item Comparer les principaux moteurs CI/CD du marché~: déclencheurs,
+        runners, jobs, stages, artefacts, secrets, notifications.
+  \item Mettre en place une pipeline standard incluant lint, tests unitaires,
+        tests d'intégration, build, analyse qualité et packaging Docker.
+  \item Adapter la même logique sur plusieurs outils pour comprendre les
+        différences de syntaxe et de fonctionnement.
+  \item Développer une application support et automatiser tout son cycle.
+  \item Aller plus loin avec~: publication d'image Docker sur un registre,
+        intégration SonarQube, notification Slack/Teams.
+\end{enumerate}
+
+\section{Application support choisie}
+
+L'application support est \textbf{BiblioGest}, un système de gestion de
+bibliothèques développé en \textbf{Jakarta EE~10} (Servlets, JSP, JAX-RS),
+packagé en WAR et déployé sur Apache Tomcat~10.1. La persistance s'appuie sur
+Hibernate~ORM~6 et une base Oracle XE. L'application expose une API REST
+\texttt{/api/livres} utilisée comme point de contrôle pour les healthchecks et
+les tests d'intégration.
+
+\section{Structure du rapport}
+
+Le rapport s'organise comme suit~: le chapitre~\ref{ch:fondements} pose les
+fondements théoriques du CI/CD et compare les cinq moteurs étudiés. Le
+chapitre~\ref{ch:app} décrit l'application BiblioGest. Le chapitre~\ref{ch:archi}
+détaille l'architecture de la pipeline implémentée. Les chapitres
+\ref{ch:gha} à \ref{ch:travis} présentent l'implémentation sur chacun des cinq
+moteurs. Le chapitre~\ref{ch:sonar} compare SonarCloud et SonarQube
+self-hosted. Le chapitre~\ref{ch:diff} analyse les difficultés rencontrées.
+Le chapitre~\ref{ch:reco} conclut par une comparaison finale et des
+recommandations.
+
+% ══════════════════════════════════════════════════════════════════════════════
+\chapter{Fondements du CI/CD et panorama des outils}
+\label{ch:fondements}
+
+\section{Concepts communs}
+
+Quelle que soit la plateforme utilisée, une pipeline CI/CD repose sur un
+vocabulaire commun qu'il convient de définir avec précision avant toute
+comparaison.
+
+\begin{description}[leftmargin=2cm, style=nextline]
+  \item[Déclencheur (trigger)] Événement qui lance l'exécution de la pipeline~:
+        push sur une branche, ouverture d'une pull request, planification
+        temporelle (cron), ou déclenchement manuel.
+  \item[Runner / Agent] Machine (physique ou virtuelle) sur laquelle les jobs
+        s'exécutent. Peut être hébergée par le fournisseur (hosted) ou
+        autogérée (self-hosted).
+  \item[Job] Unité d'exécution autonome composée d'une suite de steps. Les
+        jobs peuvent être parallèles ou séquentiels selon leurs dépendances.
+  \item[Stage] Groupe logique de jobs partageant la même phase du cycle de vie
+        (lint, build, test, deploy). Concept central de GitLab et Travis,
+        modélisé différemment dans les autres outils.
+  \item[Artefact] Fichier produit par un job et transmis aux jobs suivants ou
+        archivé~: rapports de tests, WAR, image Docker.
+  \item[Secret] Variable sensible (mot de passe, token) injectée dans
+        l'environnement d'exécution sans jamais apparaître dans les logs.
+  \item[Cache] Répertoire conservé entre les exécutions pour accélérer les
+        builds (dépendances Maven, layers Docker, modules Node).
+  \item[Notification] Message émis à la fin du pipeline (succès ou échec) vers
+        Slack, Teams, e-mail ou tout autre canal.
+\end{description}
+
+\section{Panorama des cinq outils étudiés}
+
+\subsection{GitHub Actions}
+
+Intégrée directement dans GitHub depuis~2019, GitHub~Actions adopte une
+philosophie événementielle. Chaque workflow est un fichier~YAML stocké dans
+\texttt{.github/workflows/}. La marketplace propose plus de~21\,000 actions
+réutilisables couvrant la quasi-totalité des besoins courants.
+
+Le modèle de facturation est généreux pour les projets publics~: les runners
+Linux sont gratuits et illimités. Pour les projets privés, 2\,000~minutes
+mensuelles sont offertes sur le plan gratuit. Les dépendances entre jobs sont
+exprimées via \texttt{needs:}, ce qui autorise des graphes de dépendances
+arbitraires (DAG), plus flexibles que la notion stricte de stages séquentiels.
+
+\subsection{GitLab CI/CD}
+
+GitLab~CI/CD est le système natif de la plateforme GitLab, défini dans un
+fichier \texttt{.gitlab-ci.yml} à la racine du dépôt. Son concept central est la
+notion de \emph{stages}~: tous les jobs d'un même stage s'exécutent en
+parallèle, et le stage suivant ne démarre que si tous les jobs du précédent
+réussissent (sauf \texttt{allow\_failure}).
+
+GitLab propose des runners partagés (shared runners) dans sa version cloud
+SaaS, mais l'hébergement self-managed reste très répandu en entreprise,
+notamment pour des raisons de conformité des données. L'interface de
+visualisation des pipelines est considérée comme l'une des meilleures du marché.
+
+\subsection{Jenkins}
+
+Jenkins est l'ancêtre des outils CI/CD modernes (premier release en~2011 sous
+ce nom, héritier de Hudson). Open source, il s'installe on-premise et se
+configure via une interface web ou, depuis l'introduction des Pipelines en~2016,
+via un \texttt{Jenkinsfile} écrit en Groovy~DSL.
+
+Sa force est son écosystème de plus de~1\,900 plugins, mais cela constitue
+aussi sa faiblesse~: la gestion des dépendances entre plugins peut devenir un
+véritable casse-tête de maintenance. Jenkins est le seul des cinq outils
+étudiés à être \textbf{self-hosted par nature}~: il n'existe pas de mode SaaS
+officiel.
+
+\subsection{CircleCI}
+
+CircleCI mise sur la performance et la simplicité de configuration. Son
+concept distinctif est l'\textbf{orb}~: un module YAML réutilisable et
+versionné, analogue aux actions GitHub mais avec une granularité plus large
+(un orb peut contenir plusieurs jobs, commands et executors). La particularité
+la plus notable est la possibilité de déboguer un build en SSH directement
+dans le runner, ce qui s'avère précieux lors de problèmes d'environnement
+difficiles à reproduire localement.
+
+\subsection{Travis CI}
+
+Travis~CI a longtemps été la référence pour les projets open source hébergés
+sur GitHub. Son déclin relatif depuis~2020 (changement de politique tarifaire,
+rachat par Idera, fuite vers GitHub Actions) a poussé une grande partie de la
+communauté à migrer ailleurs. Il reste néanmoins utilisé dans de nombreux
+projets existants et mérite d'être connu pour comprendre l'évolution
+historique du domaine.
+
+Travis se distingue par sa syntaxe particulièrement \textbf{concise}~: trois
+lignes suffisent à déclencher un build Java standard, sans avoir à décrire
+explicitement les étapes de checkout ou de configuration de JDK.
+
+\section{Tableau comparatif initial}
+
+\begin{table}[h!]
+\centering
+\small
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{>{\bfseries}p{3cm} p{2.1cm} p{2.1cm} p{2.1cm} p{2.1cm} p{2.1cm}}
+\toprule
+Critère & GitHub Actions & GitLab CI/CD & Jenkins & CircleCI & Travis CI \\
+\midrule
+Config. fichier        & YAML & YAML & Groovy DSL & YAML & YAML \\
+Hébergement            & SaaS & SaaS + SH & On-premise & SaaS & SaaS \\
+Concept central        & workflows / jobs & stages / jobs & pipeline / stages & workflows / jobs & stages / jobs \\
+Marketplace            & 21\,000+ actions & Modéré & 1\,900+ plugins & Orbs & Limité \\
+Intégration Git        & Native GitHub & Native GitLab & Via plugin & GitHub/GitLab/BB & GitHub \\
+Parallélisme           & Via \texttt{needs} & Par stage & Via agents & Natif (workflows) & Par stage \\
+Docker natif           & Oui & Oui (DinD) & Plugin & Oui & Oui \\
+Courbe d'apprentissage & Faible & Faible & Élevée & Moyenne & Faible \\
+\bottomrule
+\end{tabular}
+\caption{Comparaison initiale des cinq outils CI/CD}
+\label{tab:initial-comparison}
+\end{table}
+
+Une comparaison plus détaillée, enrichie par l'expérience d'implémentation,
+est présentée au chapitre~\ref{ch:reco}.
+
+% ══════════════════════════════════════════════════════════════════════════════
+\chapter{Présentation de l'application BiblioGest}
+\label{ch:app}
+
+\section{Description fonctionnelle}
+
+BiblioGest est une application web de gestion de bibliothèques. Elle permet à
+des gestionnaires authentifiés d'administrer le catalogue de livres, les
+auteurs, les catégories, les clients et les emprunts. Un seul administrateur
+peut gérer les comptes utilisateurs.
+
+Le modèle de données central est l'\textbf{emprunt}~: un client emprunte un
+livre pour une durée déterminée, paie des frais calculés en fonction du tarif
+journalier, et s'expose à une pénalité de~1,5\,× le tarif journalier par jour
+de retard.
+
+\section{Architecture technique}
+
+L'application suit le pattern MVC Jakarta~EE classique~:
+
+\begin{itemize}
+  \item \textbf{Modèle}~: entités JPA/Hibernate~6 annotées
+        (\texttt{@Entity}, \texttt{@ManyToMany}, etc.) et DAOs à transactions
+        manuelles (\texttt{RESOURCE\_LOCAL}).
+  \item \textbf{Contrôleur}~: Servlets annotées (\texttt{@WebServlet}) suivant
+        le pattern Post-Redirect-Get.
+  \item \textbf{Vue}~: pages JSP avec Tailwind CSS (CDN) et JSTL~3.0.
+  \item \textbf{API REST}~: ressource JAX-RS \texttt{/api/livres} exposant le
+        catalogue en JSON via Jersey~3.1.
+\end{itemize}
+
+\begin{figure}[h!]
+\centering
+\begin{tikzpicture}[
+  box/.style={rectangle, draw=blue!40, fill=blue!5, rounded corners,
+              minimum width=2.8cm, minimum height=1cm, text centered,
+              font=\small},
+  arr/.style={-Stealth, thick, blue!60}
+]
+\node[box] (client)  {Navigateur};
+\node[box, right=1.8cm of client]  (servlet) {Servlet / JAX-RS};
+\node[box, right=1.8cm of servlet] (dao)     {DAO / JPA};
+\node[box, right=1.8cm of dao]     (db)      {Oracle XE};
+
+\draw[arr] (client) -- (servlet) node[midway,above]{\tiny HTTP};
+\draw[arr] (servlet) -- (dao) node[midway,above]{\tiny Appel};
+\draw[arr] (dao) -- (db) node[midway,above]{\tiny JDBC};
+\draw[arr, dashed] (db) -- (dao);
+\draw[arr, dashed] (dao) -- (servlet);
+\draw[arr, dashed] (servlet) -- (client) node[midway,below]{\tiny HTML/JSON};
+\end{tikzpicture}
+\caption{Architecture applicative de BiblioGest}
+\label{fig:archi-app}
+\end{figure}
+
+\section{Route fonctionnelle exposée}
+
+La route \texttt{GET /api/livres} est la route principale utilisée dans la
+pipeline CI/CD~: elle est testée en intégration et sert de point de contrôle
+pour le healthcheck Docker.
+
+\begin{lstlisting}[language=Java, caption={Endpoint REST -- LivreResource.java}]
+@GET
+public Response getAll(@QueryParam("q") String q,
+                       @QueryParam("disponible") Boolean disponible) {
+    List<Livre> list = (q != null && !q.isBlank())
+            ? dao.search(q) : dao.findAllWithRelations();
+    if (Boolean.TRUE.equals(disponible))
+        list = list.stream().filter(Livre::isDisponible).toList();
+    return Response.ok(list.stream().map(this::toMap).toList()).build();
+}
+\end{lstlisting}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\chapter{Architecture de la pipeline CI/CD}
+\label{ch:archi}
+
+\section{Vue d'ensemble}
+
+La pipeline finale est composée de \textbf{sept étapes} exécutées dans l'ordre
+suivant, identique sur les cinq moteurs CI/CD~:
+
+\begin{figure}[h!]
+\centering
+\begin{tikzpicture}[
+  stage/.style={rectangle, draw=blue!50, fill=blue!8, rounded corners=4pt,
+                minimum width=2.1cm, minimum height=1.0cm, text centered,
+                font=\scriptsize\bfseries},
+  arr/.style={-Stealth, thick}
+]
+\node[stage] (l) {Lint};
+\node[stage, right=0.6cm of l] (t) {Tests};
+\node[stage, right=0.6cm of t] (q) {Qualité};
+\node[stage, right=0.6cm of q] (p) {Package};
+\node[stage, right=0.6cm of p] (d) {Docker};
+\node[stage, right=0.6cm of d] (s) {Sécurité};
+\node[stage, right=0.6cm of s] (n) {Notify};
+
+\draw[arr] (l) -- (t);
+\draw[arr] (t) -- (q);
+\draw[arr] (t.south) to[bend right=20] (p.south);
+\draw[arr] (p) -- (d);
+\draw[arr] (d) -- (s);
+\draw[arr] (s) -- (n);
+
+\node[font=\tiny, below=0.3cm of q] {main};
+\node[font=\tiny, below=0.3cm of d] {main};
+\node[font=\tiny, below=0.3cm of s] {main};
+\node[font=\tiny, below=0.3cm of n] {main};
+\end{tikzpicture}
+\caption{Architecture de la pipeline en sept étapes}
+\label{fig:pipeline}
+\end{figure}
+
+\begin{table}[h!]
+\centering
+\small
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{>{\bfseries}p{2.6cm} p{8.5cm} p{2cm}}
+\toprule
+Étape & Description & Branche \\
+\midrule
+Lint        & Checkstyle (style) + SpotBugs (sémantique) & toutes \\
+Tests       & Unitaires (Surefire) + intégration (Failsafe) + couverture JaCoCo & toutes \\
+Qualité     & Analyse SonarCloud avec quality gate & main \\
+Package     & Build du WAR et upload de l'artefact & toutes \\
+Docker      & Build multi-stage et push sur Docker Hub + GHCR & main \\
+Sécurité    & Scan Trivy CVE de l'image Docker & main \\
+Notify      & Notification Slack succès / échec & main \\
+\bottomrule
+\end{tabular}
+\caption{Étapes de la pipeline et conditions d'exécution}
+\label{tab:pipeline-stages}
+\end{table}
+
+\section{Stratégie de test sans base de données}
+
+L'application utilise Oracle XE pour toutes ses opérations de persistance, ce
+qui pose un problème d'environnement en CI~: on ne peut pas raisonnablement
+lancer un conteneur Oracle XE lors de chaque exécution de la pipeline (temps
+de démarrage de 90 secondes à 3 minutes, images de plusieurs Go). La solution
+adoptée est de tester uniquement la logique métier indépendante de la couche
+de persistance.
+
+Deux classes ont été extraites à cet effet~:
+
+\begin{itemize}
+  \item \textbf{PasswordUtil}~: hachage et vérification SHA-256 des mots de
+        passe. Pure Java, sans état.
+  \item \textbf{BiblioUtils}~: calcul des frais d'emprunt et des pénalités de
+        retard. Fonctions pures opérant sur \texttt{BigDecimal} et
+        \texttt{LocalDate}.
+\end{itemize}
+
+Les tests d'intégration vérifient la couche REST sans démarrer de serveur~: le
+DAO est remplacé par un mock Mockito injecté via le constructeur de
+\texttt{LivreResource}.
+
+\section{Convention de nommage}
+
+\begin{itemize}
+  \item Suffixe \texttt{Test} (ex.~\texttt{PasswordUtilTest})~: exécuté par
+        Maven~Surefire pendant \texttt{mvn test}.
+  \item Suffixe \texttt{IT} (ex.~\texttt{LivreResourceIT})~: exécuté par
+        Maven~Failsafe pendant \texttt{mvn verify}.
+\end{itemize}
+
+Cette séparation explicite évite que les tests d'intégration ralentissent les
+boucles de feedback rapides (tests unitaires en quelques secondes).
+
+\section{Configuration du POM Maven}
+
+Le \texttt{pom.xml} déclare cinq plugins clés~:
+
+\begin{table}[h!]
+\centering
+\small
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{>{\bfseries}p{4.5cm} p{2.5cm} p{6cm}}
+\toprule
+Plugin & Version & Rôle \\
+\midrule
+maven-surefire-plugin   & 3.2.5    & Exécution des tests unitaires \\
+maven-failsafe-plugin   & 3.2.5    & Exécution des tests d'intégration \\
+jacoco-maven-plugin     & 0.8.11   & Couverture de code (XML pour Sonar) \\
+sonar-maven-plugin      & 3.11.0   & Envoi des résultats à SonarCloud \\
+maven-checkstyle-plugin & 3.3.1    & Lint de style (Checkstyle 10.14.2) \\
+spotbugs-maven-plugin   & 4.8.3.1  & Lint sémantique / détection de bugs \\
+\bottomrule
+\end{tabular}
+\caption{Plugins Maven configurés dans le POM}
+\label{tab:maven-plugins}
+\end{table}
+
+\section{Architecture du Dockerfile multi-stage}
+
+Le Dockerfile est organisé en deux étapes (multi-stage build)~:
+
+\begin{enumerate}
+  \item \textbf{Stage \texttt{builder}}~: image \texttt{eclipse-temurin:17-jdk-alpine}
+        avec Maven. Compile le projet et produit \texttt{target/bibliotheque.war}.
+  \item \textbf{Stage \texttt{runtime}}~: image \texttt{tomcat:10.1-jdk17-temurin-alpine}.
+        Copie uniquement le WAR depuis le builder, configure les variables
+        d'environnement, expose le port~8080 et démarre Tomcat avec un
+        utilisateur non-root.
+\end{enumerate}
+
+L'avantage est double~: l'image finale ne contient ni Maven ni le code source,
+réduisant sa taille et sa surface d'attaque.
+
+\begin{figure}[h!]
+\centering
+\begin{tikzpicture}[
+  layer/.style={rectangle, draw=blue!50, fill=blue!8, rounded corners=4pt,
+                minimum width=4cm, minimum height=0.9cm, text centered, font=\small},
+  arr/.style={-Stealth, thick}
+]
+\node[layer] (src)     {Code source + pom.xml};
+\node[layer, below=0.3cm of src, fill=blue!15] (builder)
+  {\textbf{Stage builder} (JDK + Maven)};
+\node[layer, below=0.3cm of builder] (war) {target/bibliotheque.war};
+\node[layer, below=0.5cm of war, fill=green!15] (runtime)
+  {\textbf{Stage runtime} (Tomcat seul)};
+\node[layer, below=0.3cm of runtime] (img) {Image finale (\textasciitilde 250 Mo)};
+
+\draw[arr] (src) -- (builder);
+\draw[arr] (builder) -- (war);
+\draw[arr] (war) -- (runtime) node[midway, right, font=\tiny] {COPY --from=builder};
+\draw[arr] (runtime) -- (img);
+\end{tikzpicture}
+\caption{Architecture du Dockerfile multi-stage}
+\label{fig:dockerfile-multistage}
+\end{figure}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\chapter{Implémentation sur GitHub Actions}
+\label{ch:gha}
+
+\section{Fichier de configuration}
+
+Le workflow est défini dans \texttt{.github/workflows/ci-cd.yml}. Sept jobs y
+sont déclarés~: \texttt{lint}, \texttt{test}, \texttt{quality}, \texttt{package},
+\texttt{docker}, \texttt{security-scan}, \texttt{notify}.
+
+\section{Déclencheurs}
+
+\begin{lstlisting}[language=YAML, caption={Déclencheurs du workflow}]
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+\end{lstlisting}
+
+Tout push sur \texttt{main} ou \texttt{develop} déclenche les jobs
+\texttt{lint}, \texttt{test} et \texttt{package}. Les jobs \texttt{quality},
+\texttt{docker}, \texttt{security-scan} et \texttt{notify} sont conditionnés
+par \texttt{if:\ github.ref == 'refs/heads/main'} pour éviter de consommer le
+quota SonarCloud et de pousser des images intermédiaires sur Docker Hub à
+chaque pull request.
+
+\section{Job lint}
+
+\begin{lstlisting}[language=YAML, caption={Job lint -- Checkstyle + SpotBugs}]
+lint:
+  name: Lint (Checkstyle + SpotBugs)
+  runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: maven
+    - run: mvn -B checkstyle:check --no-transfer-progress
+    - run: mvn -B compile -DskipTests --no-transfer-progress
+    - run: mvn -B spotbugs:check --no-transfer-progress
+      continue-on-error: true
+    - if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: lint-reports
+        path: |
+          target/checkstyle-result.xml
+          target/spotbugsXml.xml
+\end{lstlisting}
+
+Note pédagogique~: Checkstyle et SpotBugs sont configurés en mode
+\textbf{informational}, c'est-à-dire que les violations sont rapportées
+(rapports XML uploadés en artefacts) sans bloquer le pipeline. Ce choix
+s'explique par le fait que le code applicatif existant n'a pas été écrit avec
+ces outils en tête (177 violations Checkstyle initialement). Rendre le job
+bloquant aurait nécessité une réécriture massive sortant du cadre du sujet.
+
+\section{Job test}
+
+\begin{lstlisting}[language=YAML, caption={Job test -- extrait}]
+test:
+  name: Tests
+  runs-on: ubuntu-latest
+  needs: lint
+  steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: maven
+    - run: mvn test -B --no-transfer-progress
+    - run: mvn verify -B --no-transfer-progress
+    - if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-reports
+        path: |
+          target/surefire-reports/
+          target/failsafe-reports/
+          target/site/jacoco/
+\end{lstlisting}
+
+Le cache Maven est activé via l'option \texttt{cache: maven} de
+\texttt{actions/setup-java}. Il réduit significativement la durée des builds
+en conservant les dépendances téléchargées entre les exécutions (de
+\textasciitilde 60s à \textasciitilde 8s pour la phase de résolution Maven).
+
+\section{Job docker -- publication multi-registry}
+
+L'image est publiée simultanément sur \textbf{Docker Hub} (public) et sur
+\textbf{GitHub Container Registry} (GHCR, intégré à GitHub) grâce à l'action
+\texttt{docker/metadata-action} qui génère plusieurs tags à la volée~:
+
+\begin{lstlisting}[language=YAML, caption={Job docker -- multi-registry}]
+docker:
+  name: Docker Build & Push
+  runs-on: ubuntu-latest
+  needs: package
+  if: github.ref == 'refs/heads/main'
+  permissions:
+    contents: read
+    packages: write
+  steps:
+    - uses: actions/checkout@v4
+    - uses: docker/setup-buildx-action@v3
+    - uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+    - uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: |
+          ${{ secrets.DOCKER_USERNAME }}/bibliotheque
+          ghcr.io/${{ github.repository_owner }}/bibliotheque
+        tags: |
+          type=raw,value=latest,enable=true
+          type=sha,prefix=,format=long
+    - uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+\end{lstlisting}
+
+\section{Job security-scan -- analyse Trivy}
+
+Trivy scanne l'image publiée à la recherche de CVE (Common Vulnerabilities and
+Exposures). Les résultats sont uploadés au format SARIF dans l'onglet
+\textbf{Security} de GitHub.
+
+\begin{lstlisting}[language=YAML, caption={Job security-scan -- Trivy}]
+security-scan:
+  name: Scan securite Trivy
+  runs-on: ubuntu-latest
+  needs: docker
+  if: github.ref == 'refs/heads/main'
+  steps:
+    - uses: aquasecurity/trivy-action@0.24.0
+      with:
+        image-ref: ${{ secrets.DOCKER_USERNAME }}/bibliotheque:latest
+        format: 'table'
+        severity: 'CRITICAL,HIGH'
+        exit-code: '0'
+        ignore-unfixed: true
+    - uses: aquasecurity/trivy-action@0.24.0
+      with:
+        image-ref: ${{ secrets.DOCKER_USERNAME }}/bibliotheque:latest
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+    - uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: 'trivy-results.sarif'
+\end{lstlisting}
+
+\section{Job notify -- notification Slack}
+
+Le dernier job s'exécute \emph{toujours} (\texttt{if: always()}) pour notifier
+aussi bien les succès que les échecs~:
+
+\begin{lstlisting}[language=YAML, caption={Job notify -- Slack}]
+notify:
+  needs: [lint, test, quality, package, docker, security-scan]
+  if: always() && github.ref == 'refs/heads/main'
+  runs-on: ubuntu-latest
+  steps:
+    - id: status
+      run: |
+        if [ "${{ contains(needs.*.result, 'failure') }}" = "true" ]; then
+          echo "text=Pipeline ECHOUEE" >> $GITHUB_OUTPUT
+          echo "color=danger" >> $GITHUB_OUTPUT
+        else
+          echo "text=Pipeline REUSSIE" >> $GITHUB_OUTPUT
+          echo "color=good" >> $GITHUB_OUTPUT
+        fi
+    - uses: slackapi/slack-github-action@v1.27.0
+      with:
+        payload: |
+          {
+            "attachments": [{
+              "color": "${{ steps.status.outputs.color }}",
+              "blocks": [...]
+            }]
+          }
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+\end{lstlisting}
+
+\section{Secrets et variables}
+
+\begin{table}[h!]
+\centering
+\small
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{>{\bfseries}p{4.5cm} p{1.8cm} p{6cm}}
+\toprule
+Nom & Type & Description \\
+\midrule
+DOCKER\_USERNAME    & Secret   & Identifiant Docker Hub \\
+DOCKER\_PASSWORD    & Secret   & Token Docker Hub (PAT) \\
+SONAR\_TOKEN        & Secret   & Token SonarCloud \\
+SLACK\_WEBHOOK\_URL & Secret   & URL d'un Incoming Webhook Slack \\
+SONAR\_PROJECT\_KEY & Variable & Clé du projet SonarCloud \\
+SONAR\_ORGANIZATION & Variable & Organisation SonarCloud \\
+\bottomrule
+\end{tabular}
+\caption{Secrets et variables GitHub Actions}
+\end{table}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\chapter{Implémentation sur GitLab CI/CD}
+\label{ch:gitlab}
+
+\section{Structure en stages}
+
+Le fichier \texttt{.gitlab-ci.yml} déclare explicitement les sept stages~:
+
+\begin{lstlisting}[language=YAML, caption={Stages GitLab}]
+stages:
+  - lint
+  - test
+  - quality
+  - package
+  - docker
+  - security
+  - notify
+\end{lstlisting}
+
+Tous les jobs d'un même stage s'exécutent en parallèle. Ainsi, le stage
+\texttt{lint} contient deux jobs (\texttt{lint:checkstyle} et
+\texttt{lint:spotbugs}) qui tournent simultanément sur des runners différents.
+
+\section{Cache Maven mutualisé}
+
+GitLab gère le cache via une clé partageable entre jobs~:
+
+\begin{lstlisting}[language=YAML, caption={Cache Maven GitLab}]
+.maven-cache: &maven-cache
+  cache:
+    key: "$CI_COMMIT_REF_SLUG-maven"
+    paths:
+      - .m2/repository
+\end{lstlisting}
+
+L'\textbf{anchor YAML} (\texttt{\&maven-cache}) est ensuite réutilisé dans chaque
+job par \texttt{<<: *maven-cache}, évitant la duplication.
+
+\section{Docker-in-Docker (DinD)}
+
+Pour construire et pousser une image Docker, GitLab utilise le service DinD~:
+
+\begin{lstlisting}[language=YAML, caption={Job docker:build-push}]
+docker:build-push:
+  stage: docker
+  image: docker:24
+  services:
+    - docker:24-dind
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  needs:
+    - job: package:war
+      artifacts: true
+  variables:
+    DOCKER_TLS_CERTDIR: "/certs"
+  before_script:
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  script:
+    - docker build -t $DOCKER_HUB_IMAGE:$CI_COMMIT_SHA -t $DOCKER_HUB_IMAGE:latest .
+    - docker push $DOCKER_HUB_IMAGE:$CI_COMMIT_SHA
+    - docker push $DOCKER_HUB_IMAGE:latest
+\end{lstlisting}
+
+\section{Intégration native JUnit}
+
+GitLab affiche directement les résultats JUnit dans l'interface des Merge
+Requests grâce à la directive \texttt{artifacts:reports:junit}~:
+
+\begin{lstlisting}[language=YAML, caption={Reports JUnit GitLab}]
+test:
+  stage: test
+  script:
+    - mvn $MAVEN_CLI_OPTS verify
+  artifacts:
+    reports:
+      junit:
+        - target/surefire-reports/TEST-*.xml
+        - target/failsafe-reports/TEST-*.xml
+  coverage: '/Total.*?([0-9]{1,3})%/'
+\end{lstlisting}
+
+La regex \texttt{coverage} permet d'extraire le pourcentage de couverture des
+logs et de l'afficher comme badge automatique sur le projet.
+
+% ══════════════════════════════════════════════════════════════════════════════
+\chapter{Implémentation sur Jenkins}
+\label{ch:jenkins}
+
+\section{Pipeline déclarative}
+
+Le \texttt{Jenkinsfile} utilise la syntaxe \textbf{déclarative} (introduite en
+2017), plus structurée et lisible que la syntaxe scriptée d'origine~:
+
+\begin{lstlisting}[language=Groovy, caption={Squelette du Jenkinsfile}]
+pipeline {
+    agent any
+    options {
+        timeout(time: 30, unit: 'MINUTES')
+        timestamps()
+        disableConcurrentBuilds()
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+    environment {
+        SONAR_TOKEN   = credentials('sonar-token')
+        DOCKER_CREDS  = credentials('docker-hub')
+        SLACK_WEBHOOK = credentials('slack-webhook')
+    }
+    tools {
+        jdk   'jdk-17'
+        maven 'maven-3.9'
+    }
+    stages { ... }
+    post   { ... }
+}
+\end{lstlisting}
+
+\section{Parallélisme de stages}
+
+Jenkins permet de paralléliser plusieurs sous-stages dans un même bloc~:
+
+\begin{lstlisting}[language=Groovy, caption={Lint parallèle dans Jenkins}]
+stage('Lint') {
+    parallel {
+        stage('Checkstyle') {
+            steps { sh 'mvn -B checkstyle:check' }
+            post { always {
+                recordIssues(tools: [checkStyle(pattern: 'target/checkstyle-result.xml')])
+            }}
+        }
+        stage('SpotBugs') {
+            steps {
+                sh 'mvn -B compile -DskipTests'
+                sh 'mvn -B spotbugs:check || true'
+            }
+            post { always {
+                recordIssues(tools: [spotBugs(pattern: 'target/spotbugsXml.xml')])
+            }}
+        }
+    }
+}
+\end{lstlisting}
+
+\section{Gestionnaire de credentials}
+
+Jenkins gère les secrets via son propre vault. Trois credentials doivent être
+créés dans \textbf{Manage Jenkins~$\to$~Credentials}~:
+
+\begin{table}[h!]
+\centering
+\small
+\begin{tabular}{>{\bfseries}p{3cm} p{4cm} p{5cm}}
+\toprule
+ID & Type & Description \\
+\midrule
+sonar-token   & Secret text          & Token SonarCloud \\
+docker-hub    & Username with password & Compte Docker Hub \\
+slack-webhook & Secret text          & URL Slack webhook \\
+\bottomrule
+\end{tabular}
+\caption{Credentials Jenkins requis}
+\end{table}
+
+L'usage en pipeline est~: \texttt{credentials('sonar-token')} expose la valeur
+dans la variable d'environnement \texttt{SONAR\_TOKEN}, masquée dans tous les
+logs.
+
+\section{Post-actions et notification}
+
+Le bloc \texttt{post} permet de déclencher des actions selon le résultat~:
+
+\begin{lstlisting}[language=Groovy, caption={Post-actions Jenkins}]
+post {
+    success { slackNotify('good',   'Pipeline REUSSIE') }
+    failure { slackNotify('danger', 'Pipeline ECHOUEE') }
+    unstable { slackNotify('warning', 'Pipeline INSTABLE') }
+    always  { cleanWs() }
+}
+\end{lstlisting}
+
+\section{Plugins Jenkins requis}
+
+\begin{itemize}
+  \item \textbf{Pipeline}~: support des Jenkinsfile.
+  \item \textbf{Docker Pipeline}~: exécution dans des conteneurs Docker.
+  \item \textbf{Warnings Next Generation}~: agrégation des rapports Checkstyle / SpotBugs.
+  \item \textbf{HTML Publisher}~: publication des rapports JaCoCo.
+  \item \textbf{JUnit}~: collecte des résultats de tests.
+  \item \textbf{Email Extension}~: envoi de mails enrichis.
+  \item \textbf{Workspace Cleanup}~: nettoyage du workspace.
+\end{itemize}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\chapter{Implémentation sur CircleCI}
+\label{ch:circleci}
+
+\section{Orbs et executors}
+
+CircleCI introduit deux concepts originaux par rapport aux autres outils~:
+
+\begin{description}[leftmargin=1cm]
+  \item[Orb] Module YAML versionné regroupant jobs, commands et executors
+        réutilisables. Analogue à une action GitHub mais avec une granularité
+        plus large.
+  \item[Executor] Environnement d'exécution préconfiguré (Docker, machine VM,
+        macOS) référençable par nom dans plusieurs jobs.
+\end{description}
+
+\begin{lstlisting}[language=YAML, caption={Orbs et executors CircleCI}]
+version: 2.1
+orbs:
+  maven:  circleci/maven@1.4.1
+  docker: circleci/docker@2.6.0
+
+executors:
+  java-executor:
+    docker:
+      - image: cimg/openjdk:17.0
+    working_directory: ~/bibliotheque
+    resource_class: medium
+
+  docker-executor:
+    machine:
+      image: ubuntu-2204:current
+    working_directory: ~/bibliotheque
+\end{lstlisting}
+
+\section{Workflow et filters}
+
+Les dépendances entre jobs et les conditions de branche sont définies dans le
+bloc \texttt{workflows}~:
+
+\begin{lstlisting}[language=YAML, caption={Workflow CircleCI}]
+workflows:
+  bibliogest-pipeline:
+    jobs:
+      - lint
+      - test:
+          requires: [lint]
+      - quality:
+          requires: [test]
+          filters:
+            branches:
+              only: main
+      - package:
+          requires: [test]
+      - docker-build-push:
+          requires: [package]
+          filters:
+            branches:
+              only: main
+\end{lstlisting}
+
+\section{Workspaces}
+
+Le partage d'artefacts entre jobs utilise \texttt{persist\_to\_workspace} et
+\texttt{attach\_workspace}~:
+
+\begin{lstlisting}[language=YAML, caption={Workspace CircleCI}]
+- persist_to_workspace:
+    root: .
+    paths:
+      - target/bibliotheque.war
+      - Dockerfile
+\end{lstlisting}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\chapter{Implémentation sur Travis CI}
+\label{ch:travis}
+
+\section{Syntaxe minimaliste}
+
+Travis CI est le plus concis des cinq outils. Une configuration Java basique
+tient en trois lignes~:
+
+\begin{lstlisting}[language=YAML, caption={Configuration Travis minimale}]
+language: java
+jdk: openjdk17
+script: mvn verify
+\end{lstlisting}
+
+Le checkout, la configuration du JDK et le \texttt{mvn install} de base sont
+implicites.
+
+\section{Configuration avancée par stages}
+
+Pour un pipeline plus complet, Travis utilise \texttt{stages} et \texttt{jobs.include}~:
+
+\begin{lstlisting}[language=YAML, caption={Stages Travis}]
+stages:
+  - lint
+  - test
+  - name: quality
+    if: branch = main
+  - package
+  - name: docker
+    if: branch = main
+
+jobs:
+  include:
+    - stage: lint
+      script:
+        - mvn -B checkstyle:check
+        - mvn -B compile -DskipTests
+        - mvn -B spotbugs:check || true
+    - stage: test
+      script:
+        - mvn -B verify --no-transfer-progress
+\end{lstlisting}
+
+\section{Notifications natives}
+
+Travis dispose d'un module de notification natif par e-mail~:
+
+\begin{lstlisting}[language=YAML, caption={Notifications email Travis}]
+notifications:
+  email:
+    on_success: change
+    on_failure: always
+\end{lstlisting}
+
+L'option \texttt{change} signifie qu'un mail n'est envoyé qu'en cas de
+changement d'état (succès après échec, ou échec après succès), évitant le spam
+sur les builds successifs réussis.
+
+\section{Avertissement}
+
+Depuis 2021, Travis CI a changé sa politique tarifaire et n'est plus gratuit
+même pour les projets OSS au-delà d'un quota initial. La communauté a
+massivement migré vers GitHub Actions. Travis reste pédagogiquement intéressant
+mais n'est plus recommandé pour de nouveaux projets.
+
+% ══════════════════════════════════════════════════════════════════════════════
+\chapter{SonarCloud vs SonarQube self-hosted}
+\label{ch:sonar}
+
+\section{Analyse de qualité}
+
+L'analyse qualité repose sur le moteur \textbf{Sonar}, qui détecte~:
+
+\begin{itemize}
+  \item \textbf{Bugs}~: code potentiellement défaillant à l'exécution.
+  \item \textbf{Vulnérabilités}~: failles de sécurité (CWE, OWASP).
+  \item \textbf{Code smells}~: défauts de maintenabilité.
+  \item \textbf{Hot spots de sécurité}~: code à risque méritant une revue.
+  \item \textbf{Couverture}~: pourcentage de lignes exécutées par les tests
+        (via JaCoCo).
+  \item \textbf{Duplication}~: blocs de code similaires.
+\end{itemize}
+
+Deux modes de déploiement sont possibles~: SonarCloud (SaaS) et SonarQube
+(auto-hébergé).
+
+\section{Mode SaaS -- SonarCloud}
+
+SonarCloud est la version hébergée dans le cloud de SonarQube. Configuration
+dans toutes les pipelines~:
+
+\begin{lstlisting}[language=bash, caption={Lancement de SonarCloud}]
+mvn verify sonar:sonar \
+  -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
+  -Dsonar.organization=${SONAR_ORGANIZATION} \
+  -Dsonar.host.url=https://sonarcloud.io \
+  -Dsonar.token=${SONAR_TOKEN}
+\end{lstlisting}
+
+\section{Mode on-premise -- SonarQube self-hosted}
+
+Pour démonstration, un fichier \texttt{docker-compose.sonarqube.yml} déploie
+une instance SonarQube complète avec sa base PostgreSQL~:
+
+\begin{lstlisting}[language=YAML, caption={docker-compose.sonarqube.yml -- extrait}]
+services:
+  sonarqube-db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: sonar
+      POSTGRES_PASSWORD: sonar
+      POSTGRES_DB: sonarqube
+    volumes:
+      - sonarqube-db-data:/var/lib/postgresql/data
+
+  sonarqube:
+    image: sonarqube:10.4-community
+    depends_on:
+      sonarqube-db:
+        condition: service_healthy
+    environment:
+      SONAR_JDBC_URL: jdbc:postgresql://sonarqube-db:5432/sonarqube
+    ports:
+      - "9000:9000"
+\end{lstlisting}
+
+Démarrage~: \texttt{docker compose -f docker-compose.sonarqube.yml up -d}
+
+Accès~: \url{http://localhost:9000} (admin / admin au premier login).
+
+Analyse pointant sur l'instance locale~:
+
+\begin{lstlisting}[language=bash]
+mvn verify sonar:sonar \
+  -Dsonar.host.url=http://localhost:9000 \
+  -Dsonar.token=<token_genere>
+\end{lstlisting}
+
+\section{Comparaison synthétique}
+
+\begin{table}[h!]
+\centering
+\small
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{>{\bfseries}p{3.5cm} p{4.5cm} p{4.5cm}}
+\toprule
+Critère & SonarCloud & SonarQube self-hosted \\
+\midrule
+Hébergement              & SaaS (cloud Sonar) & À votre charge \\
+Coût                     & Gratuit pour OSS public ; payant privé & Édition Community gratuite (autres éditions payantes) \\
+Maintenance              & Aucune & Mises à jour, sauvegardes, sécurité \\
+Confidentialité          & Code envoyé chez Sonar & 100\% on-prem \\
+Setup CI/CD              & Token + URL & Token + URL exposée publiquement \\
+Quality gates            & Préconfigurées + customisables & Customisables \\
+Idéal pour               & Démos, OSS, startups & Entreprises, secteurs régulés \\
+Effort initial           & Quelques minutes & Plusieurs heures (infra) \\
+\bottomrule
+\end{tabular}
+\caption{Comparaison SonarCloud vs SonarQube self-hosted}
+\label{tab:sonar-comparison}
+\end{table}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\chapter{Difficultés rencontrées}
+\label{ch:diff}
+
+\section{Tests sans base de données}
+
+La première difficulté a concerné l'architecture des tests. L'application
+utilise JPA avec Hibernate et une base Oracle XE. Le bloc statique de
+\texttt{JpaUtil} tente de créer l'\texttt{EntityManagerFactory} dès le
+chargement de la classe, ce qui échoue immédiatement si aucune base de données
+n'est joignable.
+
+La solution a consisté à n'instancier aucun DAO dans les tests~: les tests
+unitaires testent des classes utilitaires pures (\texttt{PasswordUtil},
+\texttt{BiblioUtils}), et les tests d'intégration injectent des mocks Mockito
+dans \texttt{LivreResource} via un constructeur dédié.
+
+\section{Constructeur d'injection package-private}
+
+Un bug subtil pré-existait dans le projet~: le constructeur d'injection de
+\texttt{LivreResource} était déclaré sans modificateur (donc package-private),
+alors que la classe de test \texttt{LivreResourceIT} se trouve dans le package
+\texttt{ma.bibliotheque.integration}. Cela provoquait une erreur de
+compilation lors de \texttt{mvn test}.
+
+Le bug n'avait jamais été détecté car le test n'avait apparemment jamais été
+exécuté localement avant la mise en place du pipeline. La correction a
+consisté à rendre le constructeur \texttt{public}, ce qui est légitime
+puisqu'il sert à l'injection de dépendances.
+
+\begin{lstlisting}[language=Java, caption={Correction du constructeur}]
+// Avant (package-private, inaccessible depuis le test)
+LivreResource(LivreDao dao) { this.dao = dao; }
+
+// Après
+public LivreResource(LivreDao dao) { this.dao = dao; }
+\end{lstlisting}
+
+\section{Conflit de jar dans WEB-INF/lib}
+
+Lors du premier déploiement sur Tomcat, une \texttt{NoClassDefFoundError} sur
+\texttt{jakarta/servlet/jsp/jstl/core/ConditionalTagSupport} s'est manifestée.
+L'investigation a révélé que la dépendance Maven
+\texttt{org.glassfish.web:jakarta.servlet.jsp.jstl:3.0.1} déclare l'API JSTL
+en scope \texttt{provided} dans son propre POM, empêchant Maven de la résoudre
+transitivement. La correction a consisté à déclarer explicitement
+\texttt{jakarta.servlet.jsp.jstl-api:3.0.0} avec le scope \texttt{compile}.
+
+Un second conflit concernait \texttt{org.glassfish:jakarta.el:4.0.2}~: ce jar
+présent dans \texttt{WEB-INF/lib} entrait en conflit avec l'implémentation
+EL~5.0 fournie par Tomcat~10.1, provoquant des \texttt{ClassCastException} au
+bootstrap JSTL. La solution a été de passer ce jar en scope \texttt{provided}.
+
+\section{Checkstyle bloquant sur code legacy}
+
+À la première exécution, Checkstyle a remonté 177 violations sur le code
+applicatif existant. Plusieurs choix étaient possibles~:
+
+\begin{enumerate}
+  \item Refactorer le code source pour passer Checkstyle (effort considérable,
+        hors périmètre du sujet).
+  \item Adopter une configuration Checkstyle ultra-permissive (vidant le sens
+        de l'outil).
+  \item Configurer le plugin Maven en mode \emph{informational}, c'est-à-dire
+        que les violations sont rapportées sans bloquer le build.
+\end{enumerate}
+
+L'option 3 a été retenue~: le plugin est configuré avec \texttt{<failOnError>false</failOnError>}
+et \texttt{<failOnViolation>false</failOnViolation>}, et les rapports XML sont
+uploadés comme artefacts CI. Cette approche est cohérente avec le but
+pédagogique du sujet (démontrer l'intégration de lint dans le pipeline) sans
+pénaliser le projet existant.
+
+\section{Oracle XE et Docker Compose}
+
+L'image Docker d'Oracle XE prend entre 90 et 180~secondes à s'initialiser
+complètement après le démarrage du conteneur. Sans la directive
+\texttt{condition: service\_healthy} dans \texttt{docker-compose.yml},
+l'application tente de se connecter avant que la PDB \texttt{XEPDB1} ne soit
+disponible, ce qui déclenche une \texttt{ExceptionInInitializerError} non
+récupérable dans \texttt{JpaUtil}. La configuration d'un healthcheck adéquat
+sur le conteneur Oracle XE et la directive \texttt{depends\_on.condition} ont
+été indispensables.
+
+\section{Permissions GitHub Container Registry}
+
+Pour pousser une image sur GHCR depuis GitHub Actions, le job doit déclarer
+explicitement \texttt{permissions: packages: write}~:
+
+\begin{lstlisting}[language=YAML]
+docker:
+  permissions:
+    contents: read
+    packages: write
+\end{lstlisting}
+
+Sans cela, l'authentification fonctionne mais le push échoue avec une erreur
+403 difficile à diagnostiquer car les logs n'indiquent pas explicitement le
+problème de permissions.
+
+\section{SpotBugs et entités JPA}
+
+SpotBugs détecte que les entités JPA exposent des collections internes via les
+getters / setters (règle \texttt{EI\_EXPOSE\_REP}). Bien que ces avertissements
+soient légitimes en Java pur, ils sont structurellement nécessaires pour
+permettre à Hibernate de gérer les relations. La solution a été de configurer
+SpotBugs avec \texttt{continue-on-error: true} côté CI et de documenter ces
+warnings comme acceptables pour ce contexte JPA.
+
+% ══════════════════════════════════════════════════════════════════════════════
+\chapter{Comparaison finale et recommandations}
+\label{ch:reco}
+
+\section{Synthèse comparative détaillée}
+
+Après implémentation effective sur les cinq moteurs, on peut produire une
+comparaison fondée sur l'expérience plutôt que sur la documentation.
+
+\begin{table}[h!]
+\centering
+\scriptsize
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{>{\bfseries}p{3.2cm} p{1.9cm} p{1.9cm} p{1.9cm} p{1.9cm} p{1.9cm}}
+\toprule
+Critère & GitHub Actions & GitLab CI/CD & Jenkins & CircleCI & Travis CI \\
+\midrule
+Type             & SaaS & SaaS + SH & Self-host & SaaS & SaaS \\
+Format config    & YAML & YAML & Groovy DSL & YAML & YAML \\
+Concept central  & jobs / steps & stages / jobs & pipeline / stages & workflows / jobs & stages / jobs \\
+Runner           & GitHub-hosted ou SH & GitLab Runner & Agents & CircleCI executors & Travis VM \\
+Secrets          & Repo / org secrets & CI/CD variables & Credentials plugin & Project env vars & Encrypted env vars \\
+Cache deps       & \texttt{actions/cache} & \texttt{cache:} & Plugin & \texttt{save\_cache} & \texttt{cache:} \\
+Marketplace      & 21k+ actions & Modéré & 1.9k+ plugins & Orbs & Limité \\
+Docker natif     & Oui (Buildx) & Oui (DinD) & Plugin & Oui (machine) & Oui \\
+Parallélisme     & Via \texttt{needs} & Par stage & \texttt{parallel} & Natif & Par stage \\
+Notification     & Action Slack & curl ou intégration & \texttt{post} block & Step Slack & \texttt{notifications:} \\
+Gratuit OSS      & Oui (généreux) & Oui (limité) & Gratuit (self-host) & Limité & Payant 2021+ \\
+Courbe apprent.  & Faible & Faible & Élevée & Moyenne & Faible \\
+Vendor lock-in   & Faible & Faible & Nul & Moyen & Moyen \\
+\bottomrule
+\end{tabular}
+\caption{Comparaison détaillée des cinq moteurs CI/CD}
+\label{tab:final-comparison}
+\end{table}
+
+\section{Équivalences conceptuelles}
+
+\begin{table}[h!]
+\centering
+\scriptsize
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{>{\bfseries}p{2.5cm} p{2.5cm} p{2cm} p{2.5cm} p{2.3cm} p{2cm}}
+\toprule
+Concept & GitHub Actions & GitLab CI & Jenkins & CircleCI & Travis \\
+\midrule
+Unité d'exécution & job             & job        & stage         & job        & job \\
+Dépendance        & \texttt{needs:} & \texttt{needs:} / stage & ordre dans \texttt{stages} & \texttt{requires:} & ordre dans \texttt{stages} \\
+Condition         & \texttt{if:}    & \texttt{rules:} / \texttt{only:} & \texttt{when \{\}} & \texttt{filters:} & \texttt{if:} \\
+Artefact          & upload-artifact & \texttt{artifacts:} & \texttt{archiveArtifacts} & \texttt{persist\_to\_workspace} & \texttt{workspaces:} \\
+Cache             & actions/cache   & \texttt{cache:} & plugin & \texttt{save\_cache} & \texttt{cache:} \\
+Secret            & \verb|${{ secrets.X }}| & \verb|$X| (masked) & \verb|credentials('id')| & \verb|$X| (project) & \verb|$X| (encrypted) \\
+\bottomrule
+\end{tabular}
+\caption{Équivalences conceptuelles entre les cinq moteurs}
+\label{tab:equivalences}
+\end{table}
+
+\section{Forces et limites de chaque outil}
+
+\subsection{GitHub Actions}
+
+\textbf{Forces}~: marketplace gigantesque, intégration GitHub sans friction,
+runners gratuits illimités pour OSS, syntaxe YAML très lisible, support
+matrix-build natif, intégration native avec GitHub Container Registry.
+
+\textbf{Limites}~: dépendant de l'écosystème GitHub (vendor partiel), self-hosted
+runners moins matures que GitLab Runner, debug en SSH non disponible.
+
+\subsection{GitLab CI/CD}
+
+\textbf{Forces}~: même outil pour SCM, CI/CD, registry, monitoring (DevOps
+complet), interface de visualisation excellente, GitLab Runner très flexible,
+mode self-hosted mature.
+
+\textbf{Limites}~: marketplace plus modeste qu'Actions, syntaxe \texttt{rules:}
+complexe pour les conditions avancées, performances des shared runners en
+plan gratuit limitées.
+
+\subsection{Jenkins}
+
+\textbf{Forces}~: 100\% open source et auto-hébergé, écosystème de plugins
+inégalé, flexibilité maximale (n'importe quel langage scriptable),
+parfaitement intégré aux outils legacy d'entreprise.
+
+\textbf{Limites}~: courbe d'apprentissage élevée (Groovy DSL), maintenance
+lourde (mises à jour de plugins fréquentes, conflits possibles), pas de mode
+SaaS officiel, UI vieillissante.
+
+\subsection{CircleCI}
+
+\textbf{Forces}~: performance élevée, orbs très bien conçus, debugging via
+SSH dans le runner, support multi-VCS (GitHub, GitLab, Bitbucket).
+
+\textbf{Limites}~: plan gratuit limité (6\,000 minutes/mois), moins d'intégrations
+natives que GitHub Actions, syntaxe légèrement plus verbeuse.
+
+\subsection{Travis CI}
+
+\textbf{Forces}~: syntaxe minimaliste idéale pour démarrer, configuration de
+base ultra-rapide, historiquement le standard OSS.
+
+\textbf{Limites}~: déclin commercial depuis 2021, communauté en fuite vers
+GitHub Actions, plan gratuit OSS supprimé, écosystème stagnant.
+
+\section{Recommandations par contexte}
+
+\begin{description}[leftmargin=0cm]
+  \item[Projet académique ou OSS public hébergé sur GitHub]
+        GitHub Actions sans hésitation~: gratuit, immédiat, marketplace
+        couvrant 100\% des besoins.
+  \item[Équipe utilisant GitLab self-hosted]
+        GitLab CI/CD~: cohérence d'outillage, DevOps unifié, pas de
+        synchronisation à maintenir.
+  \item[Grande entreprise avec contraintes on-premise fortes]
+        Jenkins~: maturité, plugins métier, intégration aux outils existants
+        (Active Directory, LDAP, JIRA, Bitbucket).
+  \item[Projet cloud-native polyglotte multi-VCS]
+        CircleCI~: orbs réutilisables, support GitHub + GitLab + Bitbucket,
+        performances élevées.
+  \item[Projet OSS hérité encore sur Travis]
+        Migrer vers GitHub Actions à la prochaine occasion~; ne plus démarrer
+        de nouveau projet sur Travis.
+\end{description}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\chapter*{Conclusion}
+\addcontentsline{toc}{chapter}{Conclusion}
+
+Ce projet a permis de mettre en pratique de manière concrète les concepts de
+l'intégration et du déploiement continus sur une application Jakarta EE
+réelle. Trois leçons principales peuvent être retenues.
+
+\textbf{Première leçon~-- la testabilité conditionne la CI/CD.} Extraire la
+logique métier dans des classes utilitaires pures, prévoir des constructeurs
+d'injection dans les ressources REST, ne pas initialiser les connexions à la
+base de données dans des blocs statiques sans stratégie de fallback~-- toutes
+ces pratiques, inspirées de l'architecture hexagonale, conditionnent
+directement la capacité à tester sans infrastructure et donc à intégrer le
+code dans un pipeline rapide.
+
+\textbf{Deuxième leçon~-- la portabilité conceptuelle des pipelines.} La même
+logique fonctionnelle (lint $\to$ test $\to$ qualité $\to$ package $\to$
+docker $\to$ sécurité $\to$ notify) s'exprime sur les cinq moteurs étudiés
+avec des syntaxes différentes mais des concepts identiques. Maîtriser un
+moteur facilite donc l'adoption des autres. Le choix entre eux relève
+davantage de contraintes contextuelles (hébergement Git, politique de sécurité,
+budget) que de différences techniques majeures.
+
+\textbf{Troisième leçon~-- la pipeline n'est pas une fin en soi.} Un pipeline
+bien configuré mais dont les alertes Slack sont ignorées, dont les rapports
+Sonar ne sont jamais consultés, dont les scans Trivy ne déclenchent jamais de
+mise à jour, n'offre qu'une illusion de rigueur. La CI/CD est un outil au
+service d'une culture d'amélioration continue~; sans cette culture, l'outil
+seul ne produit aucune valeur.
+
+Pour ce projet spécifique, \textbf{GitHub Actions} s'est révélé l'outil le
+plus adapté~: la configuration en YAML est naturellement lisible, le débogage
+en ligne est facilité par les logs détaillés, et l'intégration avec Docker
+Hub, GHCR, SonarCloud et Slack ne nécessite aucun plugin supplémentaire. Les
+quatre autres pipelines (GitLab, Jenkins, CircleCI, Travis) sont fonctionnels
+et démontrent que la même logique se transpose avec un effort modéré.
+
+% ── Bibliographie ─────────────────────────────────────────────────────────────
+\chapter*{Bibliographie}
+\addcontentsline{toc}{chapter}{Bibliographie}
+
+\begin{enumerate}[leftmargin=*, label={[\arabic*]}]
+  \item Fowler, M. (2006). \textit{Continuous Integration}. martinfowler.com.
+        \url{https://martinfowler.com/articles/continuousIntegration.html}
+  \item Humble, J. \& Farley, D. (2010). \textit{Continuous Delivery~: Reliable
+        Software Releases through Build, Test, and Deployment Automation}.
+        Addison-Wesley Professional.
+  \item GitHub, Inc. (2024). \textit{GitHub Actions Documentation}.
+        \url{https://docs.github.com/en/actions}
+  \item GitLab B.V. (2024). \textit{GitLab CI/CD Documentation}.
+        \url{https://docs.gitlab.com/ee/ci/}
+  \item Jenkins Community. (2024). \textit{Jenkins User Documentation}.
+        \url{https://www.jenkins.io/doc/}
+  \item CircleCI. (2024). \textit{CircleCI Documentation}.
+        \url{https://circleci.com/docs/}
+  \item Travis CI. (2024). \textit{Travis CI Documentation}.
+        \url{https://docs.travis-ci.com/}
+  \item SonarSource. (2024). \textit{SonarCloud Documentation}.
+        \url{https://docs.sonarcloud.io/}
+  \item SonarSource. (2024). \textit{SonarQube Documentation}.
+        \url{https://docs.sonarqube.org/}
+  \item Aqua Security. (2024). \textit{Trivy Documentation}.
+        \url{https://aquasecurity.github.io/trivy/}
+  \item Docker, Inc. (2024). \textit{Docker Documentation}.
+        \url{https://docs.docker.com/}
+  \item Docker, Inc. (2024). \textit{Multi-stage builds}.
+        \url{https://docs.docker.com/build/building/multi-stage/}
+  \item Oracle. (2024). \textit{Oracle Database Express Edition Container}.
+        \url{https://github.com/gvenzl/oci-oracle-xe}
+  \item Hibernate ORM 6. (2024). \textit{User Guide}.
+        \url{https://docs.jboss.org/hibernate/orm/6.4/userguide/html_single/}
+  \item Checkstyle Project. (2024). \textit{Checkstyle Documentation}.
+        \url{https://checkstyle.org/}
+  \item SpotBugs Project. (2024). \textit{SpotBugs Documentation}.
+        \url{https://spotbugs.github.io/}
+\end{enumerate}
+
+\end{document}

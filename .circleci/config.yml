@@ -1,0 +1,209 @@
+# ─────────────────────────────────────────────────────────────
+#  Pipeline CircleCI pour BiblioGest
+#  Équivalent du workflow GitHub Actions / GitLab / Jenkins.
+#  Démontre les concepts spécifiques à CircleCI :
+#   - orbs (modules réutilisables)
+#   - executors (environnements préconfigurés)
+#   - workflows avec parallélisme natif
+# ─────────────────────────────────────────────────────────────
+
+version: 2.1
+
+# ─────────────────────────────────────────────
+# Orbs : modules réutilisables CircleCI
+# ─────────────────────────────────────────────
+orbs:
+  maven:  circleci/maven@1.4.1
+  docker: circleci/docker@2.6.0
+
+# ─────────────────────────────────────────────
+# Executors : environnements d'exécution
+# ─────────────────────────────────────────────
+executors:
+  java-executor:
+    docker:
+      - image: cimg/openjdk:17.0
+    working_directory: ~/bibliotheque
+    resource_class: medium
+
+  docker-executor:
+    machine:
+      image: ubuntu-2204:current
+    working_directory: ~/bibliotheque
+
+# ─────────────────────────────────────────────
+# Jobs
+# ─────────────────────────────────────────────
+jobs:
+
+  lint:
+    executor: java-executor
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - maven-{{ checksum "pom.xml" }}
+            - maven-
+      - run:
+          name: Checkstyle
+          command: mvn -B checkstyle:check --no-transfer-progress
+      - run:
+          name: SpotBugs
+          command: |
+            mvn -B compile -DskipTests --no-transfer-progress
+            mvn -B spotbugs:check --no-transfer-progress || true
+      - save_cache:
+          key: maven-{{ checksum "pom.xml" }}
+          paths:
+            - ~/.m2/repository
+      - store_artifacts:
+          path: target/checkstyle-result.xml
+          destination: lint/checkstyle-result.xml
+      - store_artifacts:
+          path: target/spotbugsXml.xml
+          destination: lint/spotbugsXml.xml
+
+  test:
+    executor: java-executor
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - maven-{{ checksum "pom.xml" }}
+      - run:
+          name: Tests unitaires + intégration
+          command: mvn -B verify --no-transfer-progress
+      - save_cache:
+          key: maven-{{ checksum "pom.xml" }}
+          paths:
+            - ~/.m2/repository
+      - store_test_results:
+          path: target/surefire-reports
+      - store_test_results:
+          path: target/failsafe-reports
+      - store_artifacts:
+          path: target/site/jacoco
+          destination: coverage
+
+  quality:
+    executor: java-executor
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - maven-{{ checksum "pom.xml" }}
+      - run:
+          name: Analyse SonarCloud
+          command: |
+            mvn -B verify sonar:sonar \
+              -Dsonar.projectKey=$SONAR_PROJECT_KEY \
+              -Dsonar.organization=$SONAR_ORGANIZATION \
+              -Dsonar.host.url=https://sonarcloud.io \
+              -Dsonar.token=$SONAR_TOKEN \
+              --no-transfer-progress
+
+  package:
+    executor: java-executor
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - maven-{{ checksum "pom.xml" }}
+      - run:
+          name: Build du WAR
+          command: mvn -B package -DskipTests --no-transfer-progress
+      - persist_to_workspace:
+          root: .
+          paths:
+            - target/bibliotheque.war
+            - Dockerfile
+      - store_artifacts:
+          path: target/bibliotheque.war
+          destination: bibliotheque.war
+
+  docker-build-push:
+    executor: docker-executor
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: Build et push de l'image Docker
+          command: |
+            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+            docker build -t $DOCKER_USERNAME/bibliotheque:$CIRCLE_SHA1 \
+                         -t $DOCKER_USERNAME/bibliotheque:latest .
+            docker push $DOCKER_USERNAME/bibliotheque:$CIRCLE_SHA1
+            docker push $DOCKER_USERNAME/bibliotheque:latest
+
+  security-scan:
+    executor: docker-executor
+    steps:
+      - run:
+          name: Scan Trivy
+          command: |
+            docker run --rm aquasec/trivy:latest image \
+              --severity CRITICAL,HIGH \
+              --ignore-unfixed \
+              --exit-code 0 \
+              $DOCKER_USERNAME/bibliotheque:latest
+
+  notify:
+    docker:
+      - image: cimg/base:current
+    steps:
+      - run:
+          name: Notification Slack
+          command: |
+            if [ -z "$SLACK_WEBHOOK_URL" ]; then
+              echo "Pas de SLACK_WEBHOOK_URL configuré, skip notification."
+              exit 0
+            fi
+            curl -X POST -H 'Content-type: application/json' \
+              --data "{
+                \"attachments\": [{
+                  \"color\": \"good\",
+                  \"text\": \"✅ Pipeline RÉUSSIE - BiblioGest - $CIRCLE_BRANCH @ $CIRCLE_SHA1 - $CIRCLE_BUILD_URL\"
+                }]
+              }" \
+              "$SLACK_WEBHOOK_URL"
+
+# ─────────────────────────────────────────────
+# Workflow : orchestration des jobs
+# ─────────────────────────────────────────────
+workflows:
+  version: 2
+  bibliogest-pipeline:
+    jobs:
+      - lint
+      - test:
+          requires:
+            - lint
+      - quality:
+          requires:
+            - test
+          filters:
+            branches:
+              only: main
+      - package:
+          requires:
+            - test
+      - docker-build-push:
+          requires:
+            - package
+          filters:
+            branches:
+              only: main
+      - security-scan:
+          requires:
+            - docker-build-push
+          filters:
+            branches:
+              only: main
+      - notify:
+          requires:
+            - docker-build-push
+            - security-scan
+          filters:
+            branches:
+              only: main

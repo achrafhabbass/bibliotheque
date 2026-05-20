@@ -1,0 +1,313 @@
+name: BiblioGest CI/CD
+
+# ─────────────────────────────────────────────────────────────
+# Pipeline complète : lint → tests → qualité → package
+#                   → docker → scan sécurité → notification
+# ─────────────────────────────────────────────────────────────
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  JAVA_VERSION: '17'
+  JAVA_DISTRIBUTION: 'temurin'
+  IMAGE_NAME: bibliotheque
+
+jobs:
+
+  # ─────────────────────────────────────────────
+  # Job 1 : Lint (Checkstyle + SpotBugs)
+  # Analyse statique du code source.
+  # ─────────────────────────────────────────────
+  lint:
+    name: Lint (Checkstyle + SpotBugs)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      - name: Installation de Java ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          cache: maven
+
+      - name: Checkstyle
+        run: mvn -B checkstyle:check --no-transfer-progress
+
+      - name: Compilation préalable (requise pour SpotBugs)
+        run: mvn -B compile -DskipTests --no-transfer-progress
+
+      - name: SpotBugs
+        run: mvn -B spotbugs:check --no-transfer-progress
+        continue-on-error: true
+
+      - name: Publication des rapports de lint
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-reports
+          path: |
+            target/checkstyle-result.xml
+            target/spotbugsXml.xml
+          if-no-files-found: ignore
+
+  # ─────────────────────────────────────────────
+  # Job 2 : Tests (unitaires + intégration)
+  # Aucune base de données requise – les DAOs
+  # sont mockés avec Mockito.
+  # ─────────────────────────────────────────────
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    needs: lint
+
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Installation de Java ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          cache: maven
+
+      - name: Tests unitaires (Surefire)
+        run: mvn test -B --no-transfer-progress
+
+      - name: Tests d'intégration (Failsafe)
+        run: mvn verify -B --no-transfer-progress
+
+      - name: Publication des rapports de tests
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            target/surefire-reports/
+            target/failsafe-reports/
+            target/site/jacoco/
+
+  # ─────────────────────────────────────────────
+  # Job 3 : Analyse qualité SonarCloud
+  # Exécuté uniquement sur la branche main.
+  # ─────────────────────────────────────────────
+  quality:
+    name: SonarCloud
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          cache: maven
+
+      - name: Cache SonarCloud
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
+      - name: Analyse SonarCloud
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          mvn -B verify sonar:sonar \
+            -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }} \
+            -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }} \
+            -Dsonar.host.url=https://sonarcloud.io \
+            --no-transfer-progress
+
+  # ─────────────────────────────────────────────
+  # Job 4 : Packaging du WAR
+  # ─────────────────────────────────────────────
+  package:
+    name: Package WAR
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          cache: maven
+
+      - name: Build du WAR
+        run: mvn package -DskipTests -B --no-transfer-progress
+
+      - name: Publication du WAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: bibliotheque-war
+          path: target/bibliotheque.war
+          retention-days: 7
+
+  # ─────────────────────────────────────────────
+  # Job 5 : Build et push de l'image Docker
+  # Publie sur Docker Hub ET GitHub Container Registry.
+  # Exécuté uniquement sur main après packaging.
+  # ─────────────────────────────────────────────
+  docker:
+    name: Docker Build & Push
+    runs-on: ubuntu-latest
+    needs: package
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
+
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configuration de Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Connexion à Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Connexion à GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Génération des tags d'image
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}
+            ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=sha,prefix=,format=long
+
+      - name: Build et Push multi-registry
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ─────────────────────────────────────────────
+  # Job 6 : Scan de sécurité de l'image Docker
+  # Trivy détecte les CVE dans les couches.
+  # ─────────────────────────────────────────────
+  security-scan:
+    name: Scan sécurité Trivy
+    runs-on: ubuntu-latest
+    needs: docker
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Scan Trivy de l'image
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:latest
+          format: 'table'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '0'
+          ignore-unfixed: true
+
+      - name: Scan Trivy (SARIF pour GitHub Security)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:latest
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload SARIF vers GitHub Security
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+        continue-on-error: true
+
+  # ─────────────────────────────────────────────
+  # Job 7 : Notification finale (Slack)
+  # S'exécute toujours – succès comme échec.
+  # ─────────────────────────────────────────────
+  notify:
+    name: Notification Slack
+    runs-on: ubuntu-latest
+    needs: [lint, test, quality, package, docker, security-scan]
+    if: always() && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Calcul du statut global
+        id: status
+        run: |
+          if [ "${{ contains(needs.*.result, 'failure') }}" = "true" ]; then
+            echo "emoji=:x:" >> $GITHUB_OUTPUT
+            echo "text=Pipeline ÉCHOUÉE" >> $GITHUB_OUTPUT
+            echo "color=danger" >> $GITHUB_OUTPUT
+          else
+            echo "emoji=:white_check_mark:" >> $GITHUB_OUTPUT
+            echo "text=Pipeline RÉUSSIE" >> $GITHUB_OUTPUT
+            echo "color=good" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Envoi vers Slack
+        if: env.SLACK_WEBHOOK_URL != ''
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        uses: slackapi/slack-github-action@v1.27.0
+        with:
+          payload: |
+            {
+              "attachments": [{
+                "color": "${{ steps.status.outputs.color }}",
+                "blocks": [
+                  {
+                    "type": "header",
+                    "text": {
+                      "type": "plain_text",
+                      "text": "${{ steps.status.outputs.emoji }} ${{ steps.status.outputs.text }} – BiblioGest"
+                    }
+                  },
+                  {
+                    "type": "section",
+                    "fields": [
+                      { "type": "mrkdwn", "text": "*Branche:*\n${{ github.ref_name }}" },
+                      { "type": "mrkdwn", "text": "*Commit:*\n<${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>" },
+                      { "type": "mrkdwn", "text": "*Auteur:*\n${{ github.actor }}" },
+                      { "type": "mrkdwn", "text": "*Workflow:*\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Voir détails>" }
+                    ]
+                  }
+                ]
+              }]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
