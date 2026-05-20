@@ -280,8 +280,6 @@ jobs:
 
       - name: Envoi vers Slack
         if: env.SLACK_WEBHOOK_URL != ''
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         uses: slackapi/slack-github-action@v1.27.0
         with:
           payload: |
