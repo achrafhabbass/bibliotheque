@@ -231,7 +231,7 @@ jobs:
 
     steps:
       - name: Scan Trivy de l'image
-        uses: aquasecurity/trivy-action@0.24.0
+        uses: aquasecurity/trivy-action@master
         with:
           image-ref: ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:latest
           format: 'table'
@@ -240,7 +240,7 @@ jobs:
           ignore-unfixed: true
 
       - name: Scan Trivy (SARIF pour GitHub Security)
-        uses: aquasecurity/trivy-action@0.24.0
+        uses: aquasecurity/trivy-action@master
         with:
           image-ref: ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:latest
           format: 'sarif'
