@@ -1,5 +1,5 @@
 # BiblioGest – Guide de déploiement
-just a test for pipeline*********
+************just a test for pipeline*********
 
 [![CI/CD](https://github.com/VOTRE_USER/bibliotheque/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/VOTRE_USER/bibliotheque/actions/workflows/ci-cd.yml)
 [![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=bibliotheque&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=bibliotheque)
