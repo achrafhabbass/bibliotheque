@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Scénario de démonstration LIVE — Pipeline CI/CD BiblioGest</title>
+<style>
+  /* ============================================================ RESET ============================================================ */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 14px; }
+  body {
+    font-family: 'Segoe UI', 'Inter', system-ui, sans-serif;
+    color: #0f172a; line-height: 1.6; background: #fff;
+  }
+  .container { max-width: 900px; margin: 0 auto; padding: 40px 60px; }
+
+  /* ============================================================ COVER ============================================================ */
+  .cover {
+    min-height: 95vh;
+    background: linear-gradient(135deg, #0B1120 0%, #6D28D9 50%, #DB2777 100%);
+    color: white;
+    display: flex; flex-direction: column; justify-content: space-between;
+    padding: 80px 60px;
+    page-break-after: always;
+  }
+  .cover .eyebrow {
+    text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.2em;
+    color: #f9a8d4; margin-bottom: 1rem;
+  }
+  .cover .module {
+    font-size: 1.3rem; color: #fbbf24; margin-bottom: 2.5rem;
+  }
+  .cover h1 {
+    font-size: 3.2rem; font-weight: 800; line-height: 1.1;
+    background: linear-gradient(135deg, #fff 0%, #fbbf24 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .cover .subtitle { font-size: 1.4rem; color: #f9a8d4; margin-top: 1rem; font-style: italic; }
+  .cover .divider {
+    height: 4px; width: 200px;
+    background: linear-gradient(90deg, #fbbf24, #DB2777);
+    margin: 3rem 0; border-radius: 2px;
+  }
+  .cover .duration-box {
+    background: rgba(251, 191, 36, 0.15);
+    border: 1px solid rgba(251, 191, 36, 0.4);
+    padding: 1.5rem 2rem;
+    border-radius: 12px;
+    margin-top: 2rem;
+  }
+  .cover .duration-box-label {
+    font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.15em;
+    color: #fbbf24; margin-bottom: 0.3rem;
+  }
+  .cover .duration-box-value { font-size: 2rem; font-weight: 700; color: white; }
+  .cover .meta-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 3rem;
+  }
+  .cover .meta-label {
+    font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.15em;
+    color: #94a3b8; margin-bottom: 0.5rem;
+  }
+  .cover .meta-value { font-size: 1.1rem; font-weight: 600; color: white; }
+
+  /* ============================================================ TYPOGRAPHIE ============================================================ */
+  h1, h2, h3, h4 { font-weight: 700; line-height: 1.25; color: #0f172a; }
+  h1 { font-size: 2.2rem; margin: 2rem 0 1rem; color: #be185d; }
+  h2 {
+    font-size: 1.6rem; margin: 2.5rem 0 1rem; padding-bottom: 0.4rem;
+    border-bottom: 3px solid #DB2777; color: #be185d;
+    page-break-after: avoid;
+  }
+  h3 {
+    font-size: 1.2rem; margin: 1.8rem 0 0.8rem; color: #0f172a;
+    page-break-after: avoid;
+  }
+  h4 { font-size: 1rem; margin: 1.2rem 0 0.5rem; color: #475569; }
+  p { margin: 0.7rem 0; }
+  ul, ol { margin: 0.7rem 0 0.7rem 1.5rem; }
+  li { margin: 0.25rem 0; }
+  strong { color: #0f172a; font-weight: 600; }
+  code {
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 0.85em;
+    background: #f1f5f9; color: #be185d;
+    padding: 0.15em 0.4em; border-radius: 3px;
+  }
+  pre {
+    background: #0f172a; color: #e2e8f0;
+    padding: 1rem; border-radius: 8px;
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 0.82em; line-height: 1.5;
+    margin: 0.8rem 0;
+    overflow-x: auto;
+    page-break-inside: avoid;
+  }
+  pre code { background: none; color: inherit; padding: 0; }
+
+  /* ============================================================ CHAPTER NUMBER ============================================================ */
+  .chapter-number {
+    display: inline-block;
+    font-size: 0.85rem; font-weight: 700;
+    color: #DB2777; letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+
+  /* ============================================================ TIMELINE BLOCKS ============================================================ */
+  .timeline-block {
+    border-left: 4px solid;
+    margin: 1.5rem 0;
+    padding: 1.2rem 1.5rem;
+    background: #fafafa;
+    border-radius: 0 8px 8px 0;
+    page-break-inside: avoid;
+  }
+  .timeline-block.intro      { border-color: #3B82F6; background: #eff6ff; }
+  .timeline-block.app        { border-color: #10B981; background: #ecfdf5; }
+  .timeline-block.trigger    { border-color: #F59E0B; background: #fffbeb; }
+  .timeline-block.pipeline   { border-color: #A855F7; background: #faf5ff; }
+  .timeline-block.results    { border-color: #06B6D4; background: #ecfeff; }
+  .timeline-block.synthesis  { border-color: #DB2777; background: #fdf2f8; }
+
+  .time-marker {
+    display: inline-block;
+    background: #0f172a; color: white;
+    font-family: 'Cascadia Code', monospace;
+    font-weight: 700; font-size: 0.95rem;
+    padding: 0.3rem 0.8rem;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+  }
+  .timeline-block.intro     .time-marker { background: #1e40af; }
+  .timeline-block.app       .time-marker { background: #047857; }
+  .timeline-block.trigger   .time-marker { background: #b45309; }
+  .timeline-block.pipeline  .time-marker { background: #6d28d9; }
+  .timeline-block.results   .time-marker { background: #0e7490; }
+  .timeline-block.synthesis .time-marker { background: #9d174d; }
+
+  .timeline-title {
+    font-size: 1.15rem; font-weight: 700; color: #0f172a;
+    margin: 0.5rem 0 0.7rem;
+  }
+
+  /* Sub-blocks dans timeline */
+  .show, .say, .note, .transition, .action {
+    background: white;
+    padding: 0.8rem 1rem;
+    margin: 0.6rem 0;
+    border-radius: 6px;
+    border-left: 3px solid;
+  }
+  .show       { border-color: #3B82F6; }
+  .say        { border-color: #DB2777; background: #fdf2f8; }
+  .note       { border-color: #6b7280; }
+  .transition { border-color: #F59E0B; }
+  .action     { border-color: #10B981; }
+  .label {
+    display: inline-block;
+    font-size: 0.7rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    margin-right: 0.5rem;
+  }
+  .show       .label { color: #1e40af; }
+  .show       .label::before { content: "🖥️  "; }
+  .say        .label { color: #be185d; }
+  .say        .label::before { content: "🎤  "; }
+  .note       .label { color: #475569; }
+  .note       .label::before { content: "💡  "; }
+  .transition .label { color: #b45309; }
+  .transition .label::before { content: "🎬  "; }
+  .action     .label { color: #047857; }
+  .action     .label::before { content: "⚡  "; }
+
+  /* Citations en français */
+  .quote {
+    font-style: italic; color: #0f172a;
+    border-left: 0;
+    background: #fff;
+    padding-left: 0.5rem;
+  }
+  .quote::before { content: "\201C"; color: #DB2777; font-size: 1.5rem; vertical-align: -0.3rem; margin-right: 0.2rem; }
+  .quote::after  { content: "\201D"; color: #DB2777; font-size: 1.5rem; vertical-align: -0.5rem; margin-left: 0.2rem; }
+
+  /* ============================================================ TABLES ============================================================ */
+  table {
+    width: 100%; border-collapse: collapse; margin: 1rem 0;
+    font-size: 0.9rem; page-break-inside: avoid;
+  }
+  th {
+    background: #DB2777; color: white;
+    padding: 0.7rem; text-align: left;
+    font-weight: 600; font-size: 0.85rem;
+  }
+  td {
+    padding: 0.6rem 0.7rem;
+    border-bottom: 1px solid #e2e8f0;
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background: #f8fafc; }
+
+  /* ============================================================ CALLOUTS ============================================================ */
+  .callout {
+    border-left: 4px solid;
+    padding: 1rem 1.2rem;
+    margin: 1.5rem 0;
+    border-radius: 4px;
+    page-break-inside: avoid;
+  }
+  .callout-title { font-weight: 700; margin-bottom: 0.5rem; font-size: 0.95rem; }
+  .info    { background: #eff6ff; border-color: #3B82F6; }
+  .info .callout-title    { color: #1e40af; }
+  .tip     { background: #ecfdf5; border-color: #10B981; }
+  .tip .callout-title     { color: #047857; }
+  .warning { background: #fffbeb; border-color: #F59E0B; }
+  .warning .callout-title { color: #b45309; }
+  .danger  { background: #fef2f2; border-color: #ef4444; }
+  .danger .callout-title  { color: #b91c1c; }
+
+  /* ============================================================ Q&A ============================================================ */
+  .qa-block {
+    background: #f8fafc;
+    border-left: 4px solid #A855F7;
+    padding: 1.2rem 1.4rem;
+    margin: 1rem 0;
+    border-radius: 4px;
+    page-break-inside: avoid;
+  }
+  .qa-question { font-weight: 700; color: #6d28d9; margin-bottom: 0.5rem; }
+  .qa-question::before { content: "❓ "; }
+  .qa-answer::before { content: "💡 "; font-weight: 700; color: #047857; }
+
+  /* ============================================================ ASCII ============================================================ */
+  .ascii {
+    background: #0f172a; color: #f9a8d4;
+    padding: 1rem; border-radius: 8px;
+    font-family: 'Cascadia Mono', monospace;
+    font-size: 0.78rem; line-height: 1.4;
+    white-space: pre; overflow-x: auto;
+    margin: 1rem 0;
+    page-break-inside: avoid;
+  }
+
+  /* ============================================================ KEYBOARD KEYS ============================================================ */
+  kbd {
+    background: #f1f5f9; border: 1px solid #cbd5e1;
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    padding: 0.1rem 0.4rem;
+    font-family: 'Cascadia Code', monospace;
+    font-size: 0.85em;
+    color: #0f172a;
+  }
+
+  /* ============================================================ PAGE BREAKS ============================================================ */
+  .section { page-break-before: always; }
+  .section:first-of-type { page-break-before: avoid; }
+
+  @media print {
+    html { font-size: 11pt; }
+    body { background: white; }
+    .container { padding: 0; max-width: none; }
+    pre, .callout, table, .qa-block, .ascii, .timeline-block {
+      page-break-inside: avoid;
+    }
+    h1, h2, h3 { page-break-after: avoid; }
+    a { color: #0f172a; text-decoration: none; }
+  }
+
+  @page { size: A4; margin: 2cm; }
+</style>
+</head>
+<body>
+
+<!-- =============================================================== COVER =============================================================== -->
+<section class="cover">
+  <div>
+    <div class="eyebrow">Scénario de démonstration LIVE — Soutenance 2025–2026</div>
+    <div class="module">Module : Gestion des Projets IT</div>
+    <h1>Démonstration<br>Live Pipeline CI/CD</h1>
+    <div class="subtitle">Script minute par minute pour la soutenance BiblioGest</div>
+    <div class="divider"></div>
+    <div class="duration-box">
+      <div class="duration-box-label">Durée totale</div>
+      <div class="duration-box-value">17 minutes de démo + Q&amp;A</div>
+    </div>
+  </div>
+  <div class="meta-grid">
+    <div>
+      <div class="meta-label">Devant</div>
+      <div class="meta-value">DR. Noureddine Mouhraram</div>
+    </div>
+    <div>
+      <div class="meta-label">Présentateurs</div>
+      <div class="meta-value">Benoujeddi Amine</div>
+      <div class="meta-value">Habbass Achraf</div>
+    </div>
+  </div>
+</section>
+
+<div class="container">
+
+<!-- =============================================================== TIMELINE OVERVIEW =============================================================== -->
+<section>
+  <div class="chapter-number">Vue d'ensemble</div>
+  <h1>📅 Timeline complète de la démo</h1>
+
+  <p>
+    Voici la séquence complète, à imprimer et à garder devant toi pendant la
+    soutenance. Chaque segment a un objectif clair, une durée, et un écran
+    cible.
+  </p>
+
+  <table>
+    <thead><tr><th>Moment</th><th>Durée</th><th>Segment</th><th>Écran cible</th></tr></thead>
+    <tbody>
+      <tr><td><strong>T+00:00</strong></td><td>2 min</td><td>Introduction au DevOps et au projet</td><td>Slide PowerPoint</td></tr>
+      <tr><td><strong>T+02:00</strong></td><td>2 min</td><td>Présentation de l'architecture</td><td>Slide architecture</td></tr>
+      <tr><td><strong>T+04:00</strong></td><td>2 min</td><td>Démonstration de l'application</td><td>localhost:8081 + API</td></tr>
+      <tr><td><strong>T+06:00</strong></td><td>1 min</td><td>Déclenchement de la pipeline</td><td>VS Code + Terminal</td></tr>
+      <tr><td><strong>T+07:00</strong></td><td>5 min</td><td>Observation des 7 jobs</td><td>GitHub Actions</td></tr>
+      <tr><td><strong>T+12:00</strong></td><td>3 min</td><td>Résultats : Sonar, Docker Hub, App</td><td>3 onglets différents</td></tr>
+      <tr><td><strong>T+15:00</strong></td><td>2 min</td><td>Synthèse + ouverture vers questions</td><td>Slide PowerPoint</td></tr>
+      <tr><td><strong>T+17:00</strong></td><td>5-10 min</td><td>Questions du professeur</td><td>Variable selon question</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout warning">
+    <div class="callout-title">⚠️ Conseil de timing</div>
+    <strong>Ne pas commencer à observer la pipeline avant qu'elle ne soit déjà au moins
+    50% terminée.</strong> Tu peux passer 1 ou 2 minutes supplémentaires sur la démo de
+    l'application (étape T+04:00) pour donner le temps au pipeline de progresser.
+    Le but est qu'à T+12:00, tu n'aies plus à attendre.
+  </div>
+</section>
+
+<!-- =============================================================== SECTION 1 - INTRODUCTION =============================================================== -->
+<section class="section">
+  <div class="chapter-number">Segment 01 — T+00:00 → T+02:00</div>
+  <h1>Introduction de la démonstration</h1>
+
+  <div class="timeline-block intro">
+    <span class="time-marker">T+00:00 — Ouverture</span>
+    <div class="timeline-title">Premier contact avec le public</div>
+
+    <div class="show">
+      <span class="label">À l'écran</span>
+      Slide de couverture de ta présentation PowerPoint (titre du projet, prof, équipe).
+    </div>
+
+    <div class="say">
+      <span class="label">Phrase d'ouverture (exacte)</span>
+      <p class="quote">Bonjour Monsieur Mouhraram, bonjour à toutes et à tous. Nous allons vous présenter aujourd'hui notre projet pour le module Gestion des Projets IT, dont le sujet est : la mise en place d'une pipeline CI/CD moderne multi-outils.</p>
+    </div>
+
+    <div class="say">
+      <span class="label">Le contexte (à enchaîner)</span>
+      <p class="quote">Le développement logiciel moderne fait face à un paradoxe : plus un projet grandit, plus les tâches répétitives — compiler, tester, déployer — deviennent chronophages et sources d'erreurs humaines. Le DevOps répond à ce problème en automatisant l'intégralité de la chaîne entre le commit du développeur et la mise en production.</p>
+    </div>
+
+    <div class="note">
+      <span class="label">Note technique</span>
+      Parle <strong>lentement</strong> dans les 30 premières secondes. Le public — et le prof —
+      jugent ton calme au démarrage. Respire entre les phrases.
+    </div>
+  </div>
+
+  <div class="timeline-block intro">
+    <span class="time-marker">T+00:45 — Définitions clés</span>
+    <div class="timeline-title">Poser le vocabulaire CI/CD</div>
+
+    <div class="say">
+      <span class="label">À dire</span>
+      <p class="quote">Deux concepts fondamentaux structurent notre projet. Premièrement, l'Intégration Continue, ou CI : à chaque modification du code, on lance automatiquement une série de vérifications — compilation, tests, analyse qualité. Deuxièmement, le Déploiement Continu, ou CD : on étend cette automatisation jusqu'à la livraison de l'artefact prêt à déployer. Notre projet illustre concrètement ces deux principes.</p>
+    </div>
+  </div>
+
+  <div class="timeline-block intro">
+    <span class="time-marker">T+01:15 — Annonce du plan de démo</span>
+    <div class="timeline-title">Donner la roadmap au prof</div>
+
+    <div class="say">
+      <span class="label">À dire</span>
+      <p class="quote">Notre démonstration va se dérouler en quatre temps : d'abord, je vous présenterai brièvement l'application support et l'architecture de notre pipeline. Ensuite, je déclencherai en direct la pipeline avec un simple git push. Pendant ses quatre minutes d'exécution, je vous commenterai chaque étape. Enfin, je vous montrerai les artefacts produits : le dashboard SonarCloud, l'image Docker publiée, et l'application déployée.</p>
+    </div>
+
+    <div class="transition">
+      <span class="label">Transition vers le segment suivant</span>
+      <p class="quote">Commençons par l'architecture du projet.</p>
+    </div>
+  </div>
+</section>
+
+<!-- =============================================================== SECTION 2 - ARCHITECTURE =============================================================== -->
+<section class="section">
+  <div class="chapter-number">Segment 02 — T+02:00 → T+04:00</div>
+  <h1>Présentation rapide du projet</h1>
+
+  <div class="timeline-block intro">
+    <span class="time-marker">T+02:00 — L'application support</span>
+    <div class="timeline-title">Présenter BiblioGest en 30 secondes</div>
+
+    <div class="show">
+      <span class="label">À l'écran</span>
+      Slide architecture applicative (le schéma <em>Navigateur → Servlet → DAO → Oracle</em>).
+    </div>
+
+    <div class="say">
+      <span class="label">À dire</span>
+      <p class="quote">L'application sur laquelle nous travaillons s'appelle BiblioGest. C'est un système de gestion de bibliothèque développé en Jakarta EE 10, déployé sur Tomcat, avec une base Oracle XE. L'application n'est cependant pas le cœur de notre projet. Ce qui compte, c'est la chaîne d'automatisation qui l'entoure.</p>
+    </div>
+  </div>
+
+  <div class="timeline-block intro">
+    <span class="time-marker">T+02:30 — Stack technologique</span>
+    <div class="timeline-title">Énumérer les outils sans noyer le public</div>
+
+    <div class="say">
+      <span class="label">À dire</span>
+      <p class="quote">Notre stack se compose de cinq blocs : pour l'application, Java 17, Jakarta EE 10, Tomcat 10.1, Hibernate, Oracle XE. Pour le build, Maven, JUnit 5, Mockito, JaCoCo. Pour le lint, Checkstyle et SpotBugs. Pour la qualité, SonarCloud. Pour la sécurité, Trivy. Et pour la containerisation, Docker avec publication sur Docker Hub et GitHub Container Registry. Le tout orchestré par GitHub Actions, mais nous avons également implémenté la même pipeline sur GitLab CI, Jenkins, CircleCI et Travis CI pour démontrer la portabilité conceptuelle des principes CI/CD.</p>
+    </div>
+  </div>
+
+  <div class="timeline-block intro">
+    <span class="time-marker">T+03:00 — L'architecture du pipeline</span>
+    <div class="timeline-title">La slide vedette — diagramme en 7 étapes</div>
+
+    <div class="show">
+      <span class="label">À l'écran</span>
+      Slide montrant le diagramme du pipeline en 7 étapes (lint → tests → quality → package → docker → security → notify).
+    </div>
+
+    <div class="say">
+      <span class="label">À dire (en pointant chaque étape)</span>
+      <p class="quote">Notre pipeline est composée de 7 jobs qui s'enchaînent dans un graphe de dépendances : d'abord, l'analyse statique du code avec Checkstyle et SpotBugs. Ensuite, l'exécution des tests unitaires et d'intégration avec JUnit 5 et Mockito, accompagnée de la mesure de couverture par JaCoCo. Puis, l'analyse qualité avec SonarCloud, et en parallèle le packaging du WAR Maven. Suit la construction de l'image Docker multi-stage et sa publication sur Docker Hub. Le scan de sécurité Trivy détecte les vulnérabilités CVE de l'image. Enfin, une notification Slack informe l'équipe du résultat — succès ou échec.</p>
+    </div>
+
+    <div class="transition">
+      <span class="label">Transition</span>
+      <p class="quote">Avant de déclencher la pipeline, je vais rapidement vous montrer l'application qui est actuellement en cours d'exécution sur ma machine.</p>
+    </div>
+  </div>
+</section>
+
+<!-- =============================================================== SECTION 3 - APP DEMO =============================================================== -->
+<section class="section">
+  <div class="chapter-number">Segment 03 — T+04:00 → T+06:00</div>
+  <h1>Démonstration rapide de l'application</h1>
+
+  <div class="callout info">
+    <div class="callout-title">📋 Pré-requis avant cette section</div>
+    <ul>
+      <li><code>docker compose up -d</code> lancé 1h avant la soutenance</li>
+      <li>Vérifier <code>http://localhost:8081/api/livres</code> répond</li>
+      <li>Onglet navigateur déjà ouvert sur <code>http://localhost:8081</code></li>
+    </ul>
+  </div>
+
+  <div class="timeline-block app">
+    <span class="time-marker">T+04:00 — Interface web</span>
+    <div class="timeline-title">Montrer l'app qui tourne en local</div>
+
+    <div class="action">
+      <span class="label">Action</span>
+      <kbd>Alt</kbd>+<kbd>Tab</kbd> vers Chrome → onglet <code>localhost:8081</code> déjà ouvert sur la page de login.
+    </div>
+
+    <div class="say">
+      <span class="label">À dire</span>
+      <p class="quote">Voici l'application BiblioGest, lancée en local via docker compose. Elle tourne dans deux conteneurs : un pour Oracle XE, un pour l'application Tomcat. Je me connecte avec l'utilisateur admin.</p>
+    </div>
+
+    <div class="action">
+      <span class="label">Action</span>
+      Saisir <code>admin@biblio.ma</code> / <code>Admin@123</code> → cliquer "Connexion".
+    </div>
+
+    <div class="say">
+      <span class="label">À dire</span>
+      <p class="quote">L'interface permet de gérer le catalogue de livres, les auteurs, les catégories, les clients, et les emprunts. La logique métier calcule automatiquement les frais d'emprunt et les pénalités de retard.</p>
+    </div>
+  </div>
+
+  <div class="timeline-block app">
+    <span class="time-marker">T+05:00 — L'API REST</span>
+    <div class="timeline-title">Montrer le endpoint /api/livres</div>
+
+    <div class="action">
+      <span class="label">Action</span>
+      Nouvel onglet → <code>http://localhost:8081/api/livres</code>
+    </div>
+
+    <div class="say">
+      <span class="label">À dire</span>
+      <p class="quote">L'application expose également une API REST sur le endpoint /api/livres. Elle retourne le catalogue complet au format JSON, avec pour chaque livre ses auteurs et ses catégories. C'est cette route qui est testée automatiquement dans notre pipeline d'intégration continue, et qui sert également de healthcheck Docker.</p>
+    </div>
+
+    <div class="note">
+      <span class="label">Note technique</span>
+      Insiste sur "<em>testée automatiquement</em>" — c'est la transition naturelle vers la pipeline.
+    </div>
+
+    <div class="transition">
+      <span class="label">Transition vers le push</span>
+      <p class="quote">Maintenant, le moment clé. Je vais modifier une ligne du code et déclencher la pipeline en direct. Vous allez voir comment, à partir d'un simple git push, toute la chaîne s'enchaîne automatiquement.</p>
+    </div>
+  </div>
+</section>
+
+<!-- =============================================================== SECTION 4 - TRIGGER =============================================================== -->
+<section class="section">
+  <div class="chapter-number">Segment 04 — T+06:00 → T+07:00</div>
+  <h1>Déclenchement de la pipeline</h1>
+
+  <div class="timeline-block trigger">
+    <span class="time-marker">T+06:00 — Bascule vers VS Code</span>
+    <div class="timeline-title">Préparer la modification</div>
+
+    <div class="action">
+      <span class="label">Action</span>
+      <kbd>Alt</kbd>+<kbd>Tab</kbd> vers VS Code (déjà ouvert sur le projet).
+    </div>
+
+    <div class="say">
+      <span class="label">À dire</span>
+      <p class="quote">Voici notre projet ouvert dans VS Code. Je vais ouvrir le fichier README.md, qui est la documentation principale du projet. Je vais y ajouter une simple ligne, sans toucher au code applicatif — pour simuler une modification réaliste de documentation, comme on en fait quotidiennement en équipe.</p>
+    </div>
+  </div>
+
+  <div class="timeline-block trigger">
+    <span class="time-marker">T+06:15 — La modification exacte</span>
+    <div class="timeline-title">Quel fichier modifier et où</div>
+
+    <div class="callout warning">
+      <div class="callout-title">⚠️ Fichier à modifier : <code>README.md</code></div>
+      Ouvre le fichier dans VS Code. Va sous la première ligne <code>"# BiblioGest – Guide de déploiement"</code> et ajoute la ligne suivante :
+    </div>
+
+    <pre><code>&gt; Démo soutenance — [DATE DU JOUR au format JJ/MM/AAAA]</code></pre>
+
+    <p>Sauvegarde avec <kbd>Ctrl</kbd>+<kbd>S</kbd>.</p>
+
+    <div class="say">
+      <span class="label">À dire pendant la modification</span>
+      <p class="quote">J'ajoute juste une ligne de date dans le README. C'est volontairement trivial : le but est de prouver que <em>n'importe quelle</em> modification déclenche le pipeline, même celles qui ne touchent pas au code de production.</p>
+    </div>
+  </div>
+
+  <div class="timeline-block trigger">
+    <span class="time-marker">T+06:30 — Le commit et le push</span>
+    <div class="timeline-title">Les commandes Git exactes</div>
+
+    <div class="action">
+      <span class="label">Action — Ouvrir le terminal intégré VS Code</span>
+      <kbd>Ctrl</kbd>+<kbd>`</kbd> (touche backtick).
+    </div>
+
+    <p><strong>Commandes à exécuter, dans cet ordre exact :</strong></p>
+
+    <pre><code>git add README.md
+git commit -m "demo: live pipeline trigger - soutenance"
+git push</code></pre>
+
+    <div class="say">
+      <span class="label">Pendant <code>git add</code></span>
+      <p class="quote">Je stage le fichier modifié.</p>
+    </div>
+
+    <div class="say">
+      <span class="label">Pendant <code>git commit</code></span>
+      <p class="quote">Je crée un commit avec un message descriptif. En entreprise, on suit en général une convention comme Conventional Commits, où le préfixe indique le type — feat, fix, docs, chore...</p>
+    </div>
+
+    <div class="say">
+      <span class="label">Pendant <code>git push</code></span>
+      <p class="quote">Et maintenant, le push vers GitHub. Cette commande envoie le commit vers le dépôt distant... et déclenche automatiquement la pipeline via un webhook que GitHub configure pour nous.</p>
+    </div>
+  </div>
+
+  <div class="timeline-block trigger">
+    <span class="time-marker">T+06:50 — Bascule vers GitHub Actions</span>
+    <div class="timeline-title">Voir la pipeline démarrer</div>
+
+    <div class="action">
+      <span class="label">Action</span>
+      <kbd>Alt</kbd>+<kbd>Tab</kbd> vers Chrome → onglet <strong>GitHub Actions</strong> déjà ouvert. Si besoin, recharger la page avec <kbd>F5</kbd>.
+    </div>
+
+    <div class="say">
+      <span class="label">À dire</span>
+      <p class="quote">Et voici, le nouveau run apparaît tout en haut de la liste, avec un rond jaune qui indique qu'il est en cours d'exécution. Aucune intervention manuelle n'est requise. Je clique dessus pour suivre l'exécution job par job.</p>
+    </div>
+
+    <div class="action">
+      <span class="label">Action</span>
+      Cliquer sur le nouveau run (le plus récent, en haut).
+    </div>
+  </div>
+</section>
+
+<!-- =============================================================== SECTION 5 - PIPELINE LIVE =============================================================== -->
+<section class="section">
+  <div class="chapter-number">Segment 05 — T+07:00 → T+12:00</div>
+  <h1>Démonstration GitHub Actions — les 7 jobs</h1>
+
+  <p>
+    Le pipeline prend environ 4 minutes. Tu as donc 5 minutes pour commenter les
+    jobs un par un, au fur et à mesure qu'ils passent au vert. Ne te précipite
+    pas : commente <strong>chaque job</strong> en détail, c'est ce que le prof attend.
+  </p>
+
+  <!-- ======================== JOB 1 : LINT ======================== -->
+  <div class="timeline-block pipeline">
+    <span class="time-marker">T+07:30 — Job 1 : Lint</span>
+    <div class="timeline-title">Checkstyle + SpotBugs</div>
+
+    <div class="action">
+      <span class="label">Action</span>
+      Cliquer sur le job <strong>Lint (Checkstyle + SpotBugs)</strong> dans la colonne de gauche dès qu'il passe au vert. Déplier la step "Checkstyle" pour montrer les logs.
+    </div>
+
+    <div class="say">
+      <span class="label">À dire</span>
+      <p class="quote">Premier job, premier vert : le lint. C'est notre première barrière de qualité. Checkstyle vérifie le style du code — conventions de nommage, longueur des lignes, imports inutilisés. SpotBugs fait une analyse sémantique plus poussée : il détecte les NullPointerExceptions potentielles, les ressources non fermées, les bugs de sérialisation. Nous avons configuré ces outils en mode informationnel : ils rapportent les violations sans bloquer le pipeline, car le code applicatif existait avant l'introduction du lint et contient 177 violations Checkstyle. Les rapports XML sont disponibles en téléchargement comme artefacts GitHub Actions.</p>
+    </div>
+
+    <div class="note">
+      <span class="label">Pourquoi insister sur le mode informationnel</span>
+      C'est un choix pragmatique qui montre une réflexion d'ingénieur, pas un compromis paresseux.
+      Si le prof challenge : "<em>Sur un projet greenfield, on aurait Checkstyle bloquant dès le premier
+      commit. Sur du legacy, on accepte la dette technique et on la résorbe progressivement.</em>"
+    </div>
+  </div>
+
+  <!-- ======================== JOB 2 : TESTS ======================== -->
+  <div class="timeline-block pipeline">
+    <span class="time-marker">T+08:00 — Job 2 : Tests</span>
+    <div class="timeline-title">JUnit 5 + Mockito + JaCoCo</div>
+
+    <div class="action">
+      <span class="label">Action</span>
+      Cliquer sur <strong>Tests</strong> dans la colonne gauche. Déplier la step "Tests unitaires (Surefire)" pour montrer la ligne <code>Tests run: 15, Failures: 0</code>.
+    </div>
+
+    <div class="say">
+      <span class="label">À dire</span>
+      <p class="quote">Deuxième job : les tests. Maven Surefire exécute en premier les 15 tests unitaires sur les classes utilitaires PasswordUtil et BiblioUtils — la logique métier pure, sans dépendance à la base de données. Puis Maven Failsafe exécute 6 tests d'intégration sur la couche REST. Pour ces tests, le DAO est remplacé par un mock Mockito, ce qui nous permet de tester sans démarrer Oracle. C'est une décision architecturale clé : Oracle XE met deux à trois minutes à démarrer, ce qui serait inacceptable à chaque commit. Notre stratégie de mocking nous permet de tester en moins de 10 secondes. JaCoCo génère un rapport de couverture XML qui sera consommé par SonarCloud à l'étape suivante.</p>
+    </div>
+
+    <div class="note">
+      <span class="label">Points-clés à souligner</span>
+      <ul>
+        <li><strong>21 tests</strong>, 0 failure, 0 error</li>
+        <li><strong>10 secondes</strong> d'exécution vs 3 minutes avec Oracle</li>
+        <li><strong>Architecture hexagonale</strong> : la logique métier est isolée de la couche persistance</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ======================== JOB 3 : QUALITY ======================== -->
+  <div class="timeline-block pipeline">
+    <span class="time-marker">T+09:00 — Job 3 : Quality / SonarCloud</span>
+    <div class="timeline-title">Analyse qualité 600+ règles</div>
+
+    <div class="action">
+      <span class="label">Action</span>
+      Cliquer sur <strong>SonarCloud</strong> dans la colonne gauche. Montrer la commande Maven qui s'exécute.
+    </div>
+
+    <div class="say">
+      <span class="label">À dire</span>
+      <p class="quote">Troisième job, en parallèle du suivant : l'analyse qualité avec SonarCloud. Le code source et le rapport JaCoCo sont envoyés à SonarCloud, qui applique plus de 600 règles classifiées en trois familles : Reliability — la fiabilité ; Maintainability — la maintenabilité ; et Security — la sécurité, avec les classifications OWASP et CWE. SonarCloud calcule également une Quality Gate, qui est un ensemble de seuils définissant l'acceptabilité du code — par exemple, plus de 80% de couverture sur le nouveau code, zéro bug critique. En CI/CD strict, une Quality Gate FAILED peut bloquer le merge d'une Pull Request.</p>
+    </div>
+  </div>
+
+  <!-- ======================== JOB 4 : PACKAGE ======================== -->
+  <div class="timeline-block pipeline">
+    <span class="time-marker">T+09:30 — Job 4 : Package</span>
+    <div class="timeline-title">Construction du WAR Maven</div>
+
+    <div class="action">
+      <span class="label">Action</span>
+      Cliquer sur <strong>Package WAR</strong>. Montrer la step "Build du WAR" et la step "Publication du WAR" qui upload l'artifact.
+    </div>
+
+    <div class="say">
+      <span class="label">À dire</span>
+      <p class="quote">Quatrième job : le packaging. Maven compile le code et assemble toutes les classes, ressources et dépendances dans un fichier WAR — c'est l'artefact applicatif livrable. Ce WAR est ensuite uploadé comme artefact GitHub, conservé sept jours, téléchargeable depuis l'interface. Cela permet à un opérateur, en cas d'incident, de redéployer manuellement une version précise sans avoir à reconstruire. C'est ce qu'on appelle un artifact registry, et c'est un élément critique de la traçabilité en production.</p>
+    </div>
+  </div>
+
+  <!-- ======================== JOB 5 : DOCKER ======================== -->
+  <div class="timeline-block pipeline">
+    <span class="time-marker">T+10:30 — Job 5 : Docker</span>
+    <div class="timeline-title">Build multi-stage + Push multi-registry</div>
+
+    <div class="action">
+      <span class="label">Action</span>
+      Cliquer sur <strong>Docker Build &amp; Push</strong>. Déplier "Build et Push" pour montrer le build des layers.
+    </div>
+
+    <div class="say">
+      <span class="label">À dire</span>
+      <p class="quote">Cinquième job, et le plus impressionnant : la construction de l'image Docker et sa publication. Notre Dockerfile est en multi-stage : un premier stage avec Maven et le JDK pour compiler le WAR, puis un deuxième stage avec uniquement Tomcat, qui copie le WAR depuis le premier stage. Le builder est ensuite jeté. Résultat : une image runtime de 450 mégaoctets au lieu d'1,2 gigaoctets, et surtout une surface d'attaque réduite — pas de Maven, pas de code source dans l'image livrée. Une fois construite, l'image est publiée simultanément sur deux registres : Docker Hub, qui est le registre public historique, et GitHub Container Registry, qui s'intègre nativement au dépôt. Chaque image est taguée avec "latest" et avec le SHA du commit, ce qui permet un rollback précis vers n'importe quelle version antérieure.</p>
+    </div>
+
+    <div class="note">
+      <span class="label">Mots techniques à placer</span>
+      Layer, multi-stage, surface d'attaque, registre, tag, immutable, rollback.
+    </div>
+  </div>
+
+  <!-- ======================== JOB 6 : TRIVY ======================== -->
+  <div class="timeline-block pipeline">
+    <span class="time-marker">T+11:30 — Job 6 : Security / Trivy</span>
+    <div class="timeline-title">Scan de vulnérabilités CVE</div>
+
+    <div class="action">
+      <span class="label">Action</span>
+      Cliquer sur <strong>Scan sécurité Trivy</strong>. Si possible, montrer le tableau des CVE détectées dans les logs.
+    </div>
+
+    <div class="say">
+      <span class="label">À dire</span>
+      <p class="quote">Sixième job : le scan de sécurité avec Trivy. Là où SonarCloud regardait le code source, Trivy regarde l'image livrée — c'est complémentaire. Trivy compare chaque paquet installé dans l'image — paquets OS comme openssl, dépendances Java, fichiers de configuration — avec une base de données de vulnérabilités connues, les CVE. Chaque CVE a un identifiant standardisé, format CVE-année-numéro, et un score CVSS de 0 à 10. Le résultat est uploadé au format SARIF, qui est le standard de l'industrie pour les rapports d'analyse statique, et apparaît dans l'onglet Security de GitHub.</p>
+    </div>
+
+    <div class="note">
+      <span class="label">Si le prof demande la différence Sonar vs Trivy</span>
+      "<em>Sonar = code source, Trivy = image construite. Sonar voit ce que vous écrivez, Trivy voit
+      ce que vous livrez réellement à vos clients. Les deux sont nécessaires pour une politique
+      de sécurité shift-left complète.</em>"
+    </div>
+  </div>
+
+  <!-- ======================== JOB 7 : SLACK ======================== -->
+  <div class="timeline-block pipeline">
+    <span class="time-marker">T+11:45 — Job 7 : Notify / Slack</span>
+    <div class="timeline-title">Notification d'équipe</div>
+
+    <div class="action">
+      <span class="label">Action</span>
+      Cliquer sur <strong>Notification Slack</strong>. Si Slack est configuré, basculer vers Slack pour montrer le message reçu.
+    </div>
+
+    <div class="say">
+      <span class="label">À dire</span>
+      <p class="quote">Septième et dernier job : la notification d'équipe via Slack. Personne en équipe ne va manuellement vérifier l'onglet Actions à chaque commit. La notification automatique est le seul moyen d'avoir une boucle de feedback courte entre push et statut. Notre job inclut une condition particulière : <code>if always()</code>, qui signifie qu'il s'exécute même si un job précédent a échoué. C'est crucial — on veut être notifié <em>surtout</em> en cas d'échec. C'est ce qu'on appelle le principe fail fast : détecter et signaler les problèmes le plus tôt possible.</p>
+    </div>
+  </div>
+</section>
+
+<!-- =============================================================== SECTION 6 - SONAR =============================================================== -->
+<section class="section">
+  <div class="chapter-number">Segment 06a — T+12:00 → T+13:00</div>
+  <h1>Démonstration SonarCloud</h1>
+
+  <div class="timeline-block results">
+    <span class="time-marker">T+12:00 — Le dashboard SonarCloud</span>
+    <div class="timeline-title">Montrer les métriques de qualité</div>
+
+    <div class="action">
+      <span class="label">Action</span>
+      <kbd>Alt</kbd>+<kbd>Tab</kbd> vers l'onglet <strong>SonarCloud</strong> déjà ouvert sur le dashboard du projet <code>achrafhabbass_bibliotheque</code>.
+    </div>
+
+    <div class="say">
+      <span class="label">À dire — vue d'ensemble</span>
+      <p class="quote">Voici le dashboard SonarCloud que la pipeline vient d'alimenter. En haut, la note Quality Gate — qui synthétise tout — indique si le projet respecte nos seuils de qualité. Juste en dessous, six métriques clés : Bugs, Vulnerabilities, Security Hotspots, Code Smells, Coverage et Duplications.</p>
+    </div>
+  </div>
+
+  <div class="timeline-block results">
+    <span class="time-marker">T+12:15 — Détailler chaque métrique</span>
+
+    <div class="say">
+      <span class="label">À dire en pointant chaque chiffre</span>
+      <p class="quote">Les Bugs sont des erreurs avérées de logique — null pointer, divisions par zéro. Les Vulnerabilities sont des failles de sécurité confirmées, classifiées selon les standards OWASP et CWE. Les Security Hotspots sont du code à risque qui mérite une revue humaine — différent d'une vulnérabilité confirmée, c'est un "à vérifier". Les Code Smells sont des symptômes de mauvaise conception qui suggèrent du refactoring : méthodes trop longues, complexité élevée, code dupliqué. La Coverage est calculée à partir du rapport JaCoCo que notre pipeline a uploadé.</p>
+    </div>
+  </div>
+
+  <div class="timeline-block results">
+    <span class="time-marker">T+12:35 — Anticiper la couverture faible</span>
+
+    <div class="say">
+      <span class="label">À dire — important d'anticiper</span>
+      <p class="quote">Vous remarquerez que notre couverture est volontairement faible, autour de 8%. C'est un choix : nous testons uniquement la logique métier pure et la couche REST. Les Servlets, les DAO Hibernate et les JSP nécessiteraient soit un serveur d'application complet, soit Testcontainers pour démarrer Oracle dans un conteneur de test. C'est une évolution future identifiée dans notre rapport. Le principe de la pyramide des tests est respecté : beaucoup d'unitaires rapides à la base, peu d'intégration au milieu.</p>
+    </div>
+
+    <div class="note">
+      <span class="label">Si le prof challenge sur la couverture</span>
+      "<em>La couverture absolue n'est pas un objectif en soi — c'est la couverture de la <strong>logique
+      métier critique</strong> qui compte. Tester un getter à 100% n'apporte rien. Une couverture de 80%
+      sur le code business vaut mieux qu'une couverture de 95% diluée sur tout.</em>"
+    </div>
+  </div>
+</section>
+
+<!-- =============================================================== SECTION 7 - DOCKER =============================================================== -->
+<section class="section">
+  <div class="chapter-number">Segment 06b — T+13:00 → T+14:00</div>
+  <h1>Démonstration Docker Hub</h1>
+
+  <div class="timeline-block results">
+    <span class="time-marker">T+13:00 — L'image publiée</span>
+    <div class="timeline-title">Montrer la preuve que l'image existe</div>
+
+    <div class="action">
+      <span class="label">Action</span>
+      <kbd>Alt</kbd>+<kbd>Tab</kbd> vers l'onglet <strong>Docker Hub</strong> déjà ouvert sur la page de l'image.
+    </div>
+
+    <div class="say">
+      <span class="label">À dire</span>
+      <p class="quote">Voici l'image Docker que la pipeline vient de publier. Elle est désormais disponible publiquement. N'importe quel développeur peut maintenant la récupérer avec un simple "docker pull achrafhb/bibliotheque". Regardez les tags : il y a "latest", qui pointe toujours sur la dernière version, et il y a une série de tags qui sont les SHA des commits — chacun correspond à une version précise et immutable. C'est ce qui permet le rollback : si la dernière version casse en production, on redéploie le tag correspondant au commit précédent.</p>
+    </div>
+  </div>
+
+  <div class="timeline-block results">
+    <span class="time-marker">T+13:30 — Le multi-stage build</span>
+
+    <div class="say">
+      <span class="label">À dire</span>
+      <p class="quote">L'image fait environ 450 mégaoctets. Sans notre stratégie multi-stage, elle ferait 1,2 gigaoctets : on aurait Maven et le code source dedans, totalement inutiles en production. Le multi-stage build est une bonne pratique standard de Docker depuis 2017 : on construit dans un environnement complet, mais on ne livre qu'un environnement runtime minimal. C'est aussi un principe de sécurité — ce qui n'est pas dans l'image ne peut pas être exploité par un attaquant.</p>
+    </div>
+
+    <div class="note">
+      <span class="label">Optionnel — montrer le Dockerfile</span>
+      Si tu as encore du temps, bascule sur VS Code et ouvre <code>Dockerfile</code>. Montre les
+      deux <code>FROM</code> et la directive <code>COPY --from=builder</code>.
+    </div>
+  </div>
+</section>
+
+<!-- =============================================================== SECTION 8 - APP DEPLOYEE =============================================================== -->
+<section class="section">
+  <div class="chapter-number">Segment 06c — T+14:00 → T+15:00</div>
+  <h1>Démonstration : l'application déployée = l'image publiée</h1>
+
+  <div class="timeline-block results">
+    <span class="time-marker">T+14:00 — Cohérence end-to-end</span>
+    <div class="timeline-title">Faire le lien entre code → pipeline → app</div>
+
+    <div class="action">
+      <span class="label">Action</span>
+      Basculer vers Slack (si configuré) et montrer la notification.
+    </div>
+
+    <div class="say">
+      <span class="label">À dire — la notification Slack</span>
+      <p class="quote">Et voici la notification finale arrivée sur Slack. Le statut, vert : Pipeline RÉUSSIE. La branche, le SHA du commit, l'auteur, et un lien direct vers le run. C'est ce que reçoit toute l'équipe à chaque déploiement.</p>
+    </div>
+  </div>
+
+  <div class="timeline-block results">
+    <span class="time-marker">T+14:30 — L'application en local = l'image publiée</span>
+
+    <div class="action">
+      <span class="label">Action</span>
+      Basculer vers l'onglet <code>localhost:8081</code>.
+    </div>
+
+    <div class="say">
+      <span class="label">À dire</span>
+      <p class="quote">Voilà l'application qui tourne en local. C'est exactement la même image Docker que celle que nous venons de publier. Le pipeline garantit que ce que vous voyez ici est ce qui a passé toutes les 7 étapes de validation. Si demain je déploie cette image sur un cluster Kubernetes en production, le comportement sera strictement identique. C'est ce qu'on appelle le principe "build once, run anywhere", qui est la promesse fondatrice de Docker.</p>
+    </div>
+  </div>
+</section>
+
+<!-- =============================================================== SECTION 9 - SYNTHESE =============================================================== -->
+<section class="section">
+  <div class="chapter-number">Segment 07 — T+15:00 → T+17:00</div>
+  <h1>Synthèse et ouverture aux questions</h1>
+
+  <div class="timeline-block synthesis">
+    <span class="time-marker">T+15:00 — Bascule slide finale</span>
+    <div class="timeline-title">Revenir à la présentation pour conclure</div>
+
+    <div class="action">
+      <span class="label">Action</span>
+      <kbd>Alt</kbd>+<kbd>Tab</kbd> vers la présentation PowerPoint. Aller à la slide "Conclusion".
+    </div>
+
+    <div class="say">
+      <span class="label">À dire — synthèse en 1 minute</span>
+      <p class="quote">En résumé, en moins de quatre minutes, à partir d'un simple git push, nous avons : analysé statiquement le code, exécuté 21 tests, vérifié la qualité avec SonarCloud, packagé le WAR, construit et publié une image Docker sur deux registres, scanné les vulnérabilités CVE, et notifié l'équipe sur Slack. Aucune intervention humaine. C'est exactement ce qu'attend une organisation DevOps mature en 2026.</p>
+    </div>
+  </div>
+
+  <div class="timeline-block synthesis">
+    <span class="time-marker">T+16:00 — Les 3 leçons retenues</span>
+
+    <div class="say">
+      <span class="label">À dire</span>
+      <p class="quote">Notre projet nous a appris trois leçons fondamentales. Premièrement, la testabilité conditionne la rapidité de la CI/CD : c'est l'architecture du code qui détermine la durée de la pipeline. Deuxièmement, les concepts CI/CD sont portables : la même logique fonctionne sur GitHub Actions, GitLab, Jenkins, CircleCI ou Travis CI — seule la syntaxe diffère. Troisièmement, et c'est sans doute le plus important : une pipeline n'est pas une fin en soi. Sa valeur dépend de la culture d'équipe qui la nourrit. Un pipeline dont les alertes sont ignorées n'offre qu'une illusion de rigueur.</p>
+    </div>
+  </div>
+
+  <div class="timeline-block synthesis">
+    <span class="time-marker">T+16:50 — Phrase finale</span>
+
+    <div class="say">
+      <span class="label">Phrase d'ouverture aux questions</span>
+      <p class="quote">Je vous remercie de votre attention. Nous sommes maintenant prêts à répondre à vos questions.</p>
+    </div>
+
+    <div class="note">
+      <span class="label">Pose</span>
+      Reste silencieux, légèrement souriant, regard vers le prof. Laisse-lui le temps de formuler.
+    </div>
+  </div>
+</section>
+
+<!-- =============================================================== SECTION 10 - QUESTIONS =============================================================== -->
+<section class="section">
+  <div class="chapter-number">Segment 08 — T+17:00 → fin</div>
+  <h1>Questions probables du professeur</h1>
+
+  <p>
+    Voici les 20 questions les plus probables sur ta pipeline spécifique. Chaque
+    réponse est calibrée pour 30-60 secondes, avec une structure : <em>réponse
+    directe → justification technique → ouverture</em>.
+  </p>
+
+  <h2>🎯 Sur les choix d'architecture</h2>
+
+  <div class="qa-block">
+    <div class="qa-question">Pourquoi 7 jobs et pas 1 seul gros job avec toutes les commandes ?</div>
+    <p class="qa-answer">Trois raisons : <strong>parallélisme</strong> — quality et package tournent en même temps, ce qui réduit la durée totale ; <strong>fail fast</strong> — si lint échoue, on n'exécute pas les 6 jobs suivants et on économise des ressources ; <strong>observabilité</strong> — chaque job a son propre log et son propre statut dans l'UI, ce qui facilite considérablement le debugging.</p>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Pourquoi avoir choisi GitHub Actions plutôt que Jenkins ?</div>
+    <p class="qa-answer">GitHub Actions est intégré nativement à notre dépôt, sans configuration de webhook. Sa marketplace de 21 000+ actions évite de réécrire des scripts d'infrastructure. Et c'est gratuit illimité pour les repos publics. Jenkins aurait été pertinent dans un contexte d'entreprise avec contraintes on-premise — pour un projet pédagogique, GitHub Actions était le choix le plus rationnel. Nous avons quand même implémenté Jenkins dans le Jenkinsfile pour démontrer la portabilité.</p>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Pourquoi pousser sur Docker Hub <em>et</em> GHCR ?</div>
+    <p class="qa-answer">Trois raisons : <strong>redondance</strong> — si Docker Hub a un incident, GHCR reste accessible ; <strong>simplicité d'auth</strong> — sur GHCR, l'authentification utilise le GITHUB_TOKEN auto-généré, donc zéro setup ; <strong>contournement des rate limits</strong> — Docker Hub limite à 100 pulls anonymes par 6 heures sur le plan gratuit, ce qui peut casser un CI/CD à fort trafic. GHCR n'a pas ce problème.</p>
+  </div>
+
+  <h2>🧪 Sur les tests</h2>
+
+  <div class="qa-block">
+    <div class="qa-question">Pourquoi ne pas tester avec une vraie base Oracle ?</div>
+    <p class="qa-answer">Oracle XE met 90 secondes à 3 minutes pour démarrer. Multiplié par chaque commit, c'est inacceptable — un développeur ferait 20 pushs par jour, soit 1h+ de temps mort. Nous utilisons donc Mockito pour remplacer les DAOs par des mocks. Cela isole la logique métier, conformément au principe d'architecture hexagonale. Pour des tests d'intégration <em>réels</em>, on utiliserait Testcontainers, qui démarre Oracle dans un conteneur juste pour les tests — c'est une évolution future identifiée.</p>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">8% de couverture, c'est très peu, non ?</div>
+    <p class="qa-answer">C'est volontaire et défendable. Nous testons uniquement la logique métier pure et la couche REST avec mocks. Les Servlets sont des intégrateurs HTTP — peu de logique métier, beaucoup de plomberie, peu de valeur à tester unitairement. Les DAOs nécessiteraient une vraie base. La règle d'or : <em>la couverture absolue n'est pas un objectif en soi</em> — c'est la couverture du code business critique qui compte. Tester un getter à 100% n'apporte rien.</p>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Quelle est la différence entre Mockito et un stub manuel ?</div>
+    <p class="qa-answer">Un stub manuel est une classe que vous écrivez à la main qui implémente l'interface du DAO — verbeux, fragile, doit être maintenu à chaque changement de l'interface. Mockito génère ces stubs à la volée par bytecode, et permet une syntaxe expressive avec when/thenReturn pour configurer les retours, et verify pour vérifier les appels. C'est devenu le standard de facto en Java.</p>
+  </div>
+
+  <h2>🔐 Sur la sécurité</h2>
+
+  <div class="qa-block">
+    <div class="qa-question">Comment GitHub stocke-t-il les secrets ?</div>
+    <p class="qa-answer">Chiffrement asymétrique : le navigateur chiffre la valeur avec la clé publique du dépôt avant l'envoi. GitHub ne stocke que la version chiffrée — personne, même pas Microsoft, ne peut la lire sans la clé privée. Au runtime, le runner déchiffre juste-à-temps. Et GitHub masque automatiquement toute valeur secrète qui apparaîtrait dans les logs avec des astérisques. C'est conforme au principe Zero Trust.</p>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Que faire si un secret fuite par accident ?</div>
+    <p class="qa-answer">Rotation immédiate, sans débat : révoquer le token compromis, en générer un nouveau, mettre à jour le secret dans GitHub. <em>D'abord rotation, ensuite enquête.</em> Ne jamais penser "ce n'était que dans tel canal privé" — un secret exposé doit être considéré comme cassé. C'est ce qu'on appelle le principe "assume breach" en cybersécurité.</p>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">À quoi sert Trivy par rapport à Sonar ?</div>
+    <p class="qa-answer">Sonar regarde le code source que vous écrivez. Trivy regarde l'image que vous livrez. Les deux sont complémentaires et nécessaires. Une image peut être propre côté code source mais contenir un paquet OS avec une CVE critique — par exemple openssl avec une faille récente. Seul Trivy détectera ce cas. C'est la philosophie shift-left : intégrer les contrôles sécurité dans la CI/CD plutôt qu'en audit annuel.</p>
+  </div>
+
+  <h2>🐳 Sur Docker</h2>
+
+  <div class="qa-block">
+    <div class="qa-question">Pourquoi multi-stage et pas single-stage ?</div>
+    <p class="qa-answer">Pour séparer build et runtime. Le stage builder contient Maven, le JDK complet, le cache des dépendances, et le code source — il fait environ 1,2 gigaoctets. Le stage runtime ne contient que Tomcat et le WAR final — environ 450 mégaoctets. On <em>jette</em> le builder à la fin. Résultat : image deux fois plus petite, pull plus rapide en production, et surtout surface d'attaque considérablement réduite — un attaquant ne peut pas exploiter un Maven qui n'existe pas dans l'image.</p>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Qu'est-ce qu'une layer Docker ?</div>
+    <p class="qa-answer">C'est l'unité de stockage immutable d'une image. Chaque instruction du Dockerfile — RUN, COPY, ADD — crée une nouvelle layer. Les layers sont stockées en UnionFS, ce qui permet la déduplication entre images. Quand vous faites docker pull, Docker ne télécharge que les layers que vous n'avez pas déjà localement. Le tag final est en fait un manifest qui pointe vers une liste de layers ordonnées.</p>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Pourquoi exécuter le conteneur sous un utilisateur non-root ?</div>
+    <p class="qa-answer">Par défaut, Docker exécute le processus principal en root <em>à l'intérieur du conteneur</em>. Si un attaquant compromet l'application — par injection ou autre vulnérabilité — il dispose alors de root dans le conteneur. Avec certaines mauvaises configurations, comme le montage du Docker socket ou des capabilities Linux non isolées, il peut s'échapper et compromettre l'hôte. En passant en USER tomcat, on limite cet impact même en cas de compromission applicative.</p>
+  </div>
+
+  <h2>🚀 Sur le DevOps</h2>
+
+  <div class="qa-block">
+    <div class="qa-question">Continuous Delivery vs Continuous Deployment, quelle différence ?</div>
+    <p class="qa-answer">CD Delivery : l'artefact est prêt à déployer après chaque pipeline, mais le déploiement reste manuel — c'est notre cas. CD Deployment : le déploiement en production est lui aussi automatique. Notre pipeline s'arrête à la publication de l'image. Le passage en Deployment nécessiterait un cluster Kubernetes et un GitOps comme ArgoCD pour observer le registre et synchroniser le cluster — c'est notre évolution future.</p>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Quelles métriques utiliseriez-vous pour mesurer votre CI/CD ?</div>
+    <p class="qa-answer">Les 4 métriques DORA, qui sont devenues le standard de l'industrie : <strong>Deployment Frequency</strong> — combien de fois on déploie ; <strong>Lead Time for Changes</strong> — temps entre commit et production ; <strong>Change Failure Rate</strong> — pourcentage de déploiements qui causent une régression ; <strong>Mean Time to Restore</strong> — temps de récupération après incident. Les équipes haute performance déploient plusieurs fois par jour avec moins de 15% d'échecs.</p>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Quelles sont les évolutions futures de votre projet ?</div>
+    <p class="qa-answer">À court terme : intégrer Testcontainers pour tester contre une vraie Oracle dans la CI ; ajouter Renovate pour la mise à jour automatique des dépendances ; durcir le Quality Gate Sonar. À moyen terme : passer en Continuous Deployment vers un cluster Kubernetes via Helm et ArgoCD ; ajouter l'observabilité avec Prometheus et Grafana. À long terme : feature flags via LaunchDarkly, tests de charge automatisés avec k6, signatures d'artefacts avec Cosign pour la supply chain security.</p>
+  </div>
+
+  <h2>🛠️ Sur des points spécifiques de notre code</h2>
+
+  <div class="qa-block">
+    <div class="qa-question">À quoi sert le <code>if: always()</code> sur le job notify ?</div>
+    <p class="qa-answer">Par défaut, GitHub Actions stoppe les jobs qui dépendent d'un job raté. Or, on veut être notifié <em>surtout</em> en cas d'échec — ce serait absurde de ne recevoir des notifications que pour les succès. Le <code>if: always()</code> garantit l'exécution du job quel que soit le résultat des dépendances. C'est un pattern standard pour les notifications, le nettoyage de ressources, ou les rapports finaux.</p>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Pourquoi <code>continue-on-error: true</code> sur SpotBugs ?</div>
+    <p class="qa-answer">Choix pragmatique : notre code applicatif contient des warnings SpotBugs liés à la nature même de JPA — par exemple EI_EXPOSE_REP sur les collections d'entités, qui est structurellement nécessaire pour qu'Hibernate puisse gérer les relations. Bloquer la pipeline sur ces warnings n'aurait pas de sens. Avec <code>continue-on-error</code>, le job reste vert mais le rapport est uploadé en artifact pour consultation. C'est un compromis assumé documenté dans le rapport.</p>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Pourquoi les jobs quality, docker, security ne tournent que sur main ?</div>
+    <p class="qa-answer">Trois raisons : <strong>quotas</strong> — SonarCloud a des limites sur le plan gratuit ; <strong>pollution</strong> — pousser une image à chaque PR encombrerait le registre Docker Hub avec des versions intermédiaires inutilisables ; <strong>vitesse</strong> — on veut un feedback rapide sur les PR, donc seulement lint + test + package, qui prennent moins de 2 minutes. Le pipeline complet ne s'exécute qu'au moment de la fusion sur main.</p>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Si la pipeline rate, comment vous reprenez ?</div>
+    <p class="qa-answer">Diagnostic en 5 étapes : <strong>(1)</strong> lire le message d'erreur exact dans l'UI Actions ; <strong>(2)</strong> identifier le step précis qui rate ; <strong>(3)</strong> reproduire localement avec la même commande Maven ou Docker ; <strong>(4)</strong> si reproductible, fix local puis push ; si non, c'est une différence d'environnement à investiguer. Sur ce projet, nous avons rencontré et résolu six problèmes concrets — bloc env dupliqué, version Trivy retirée, secrets vides, etc. — tous documentés dans le rapport.</p>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Qu'est-ce que <code>actions/checkout@v4</code> exactement ?</div>
+    <p class="qa-answer">C'est une action GitHub officielle, version 4, qui clone le code source du dépôt dans le runner. Sans elle, le runner n'aurait pas accès au code à compiler. La notation <code>@v4</code> est un pinning de version : on s'assure de la reproductibilité du build en figeant la version. Les meilleures pratiques de sécurité supply chain recommandent même de pinner le SHA exact plutôt que la tag majeure, mais c'est un compromis avec la maintenance.</p>
+  </div>
+</section>
+
+<!-- =============================================================== SECTION 11 - ECRANS =============================================================== -->
+<section class="section">
+  <div class="chapter-number">Annexe A</div>
+  <h1>Organisation exacte des écrans</h1>
+
+  <h2>🪟 Setup à préparer 5 minutes avant la démo</h2>
+
+  <p>
+    Le but : ne jamais avoir à fouiller pendant la démo. Tout doit être à un
+    <kbd>Alt</kbd>+<kbd>Tab</kbd> de distance.
+  </p>
+
+  <h3>Applications à lancer</h3>
+
+  <ol>
+    <li><strong>Chrome</strong> — avec exactement les onglets ci-dessous, dans cet ordre :
+      <ol type="a">
+        <li><code>https://github.com/achrafhabbass/bibliotheque</code> — code source</li>
+        <li><code>https://github.com/achrafhabbass/bibliotheque/actions</code> — pipelines (rester sur cette page)</li>
+        <li><code>https://sonarcloud.io/project/overview?id=achrafhabbass_bibliotheque</code> — qualité</li>
+        <li><code>https://hub.docker.com/r/achrafhb/bibliotheque/tags</code> — image Docker</li>
+        <li>Onglet Slack avec le canal <code>#bibliogest-ci</code> (si configuré)</li>
+        <li><code>http://localhost:8081</code> — page de login de l'app</li>
+        <li><code>http://localhost:8081/api/livres</code> — API REST</li>
+      </ol>
+    </li>
+    <li><strong>VS Code</strong> — ouvert sur le projet, terminal intégré actif</li>
+    <li><strong>Présentation PowerPoint</strong> — en mode présentation, slide 1 affichée</li>
+  </ol>
+
+  <h3>Ordre de navigation pendant la démo</h3>
+
+  <div class="ascii">
+T+00:00  →  PowerPoint (slide intro)
+T+02:00  →  PowerPoint (slide architecture)
+T+04:00  →  Chrome onglet 6 (localhost:8081 login)
+T+05:00  →  Chrome onglet 7 (API /api/livres)
+T+06:00  →  VS Code (modifier README + terminal)
+T+06:50  →  Chrome onglet 2 (GitHub Actions)
+T+12:00  →  Chrome onglet 3 (SonarCloud)
+T+13:00  →  Chrome onglet 4 (Docker Hub)
+T+14:00  →  Chrome onglet 5 (Slack)
+T+14:30  →  Chrome onglet 6 (localhost:8081)
+T+15:00  →  PowerPoint (slide conclusion)
+  </div>
+
+  <h2>💻 Si tu as deux écrans (idéal)</h2>
+
+  <table>
+    <thead><tr><th>Écran</th><th>Contenu</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Écran principal (projeté)</strong></td><td>Chrome en plein écran, onglet actuel</td></tr>
+      <tr><td><strong>Écran personnel</strong></td><td>Cette feuille de script, notes du présentateur</td></tr>
+    </tbody>
+  </table>
+
+  <h2>🔍 Outils pour rendre l'écran lisible de loin</h2>
+
+  <ul>
+    <li><strong>Chrome zoom à 110%</strong> (<kbd>Ctrl</kbd>+<kbd>+</kbd>) — pour les sites web</li>
+    <li><strong>VS Code zoom à +2</strong> (<kbd>Ctrl</kbd>+<kbd>+</kbd>) — pour le code</li>
+    <li><strong>ZoomIt</strong> (gratuit Microsoft) — <kbd>Ctrl</kbd>+<kbd>1</kbd> zoom, <kbd>Ctrl</kbd>+<kbd>2</kbd> annotation</li>
+    <li><strong>PowerToys Mouse Highlighter</strong> — un cercle jaune autour du curseur, visible de loin</li>
+  </ul>
+</section>
+
+<!-- =============================================================== SECTION 12 - BACKUP =============================================================== -->
+<section class="section">
+  <div class="chapter-number">Annexe B</div>
+  <h1>Plan de secours</h1>
+
+  <p>
+    Murphy's Law : ce qui peut mal tourner tournera mal. Voici les 4 plans dans
+    l'ordre du préférable au pire — et exactement quoi dire dans chaque cas
+    pour rester calme et pro.
+  </p>
+
+  <h2>🟢 Plan A — Tout marche (probabilité 80%)</h2>
+  <p>Suivre le script ci-dessus à la lettre.</p>
+
+  <h2>🟡 Plan B — Pipeline lente ou un job qui rate</h2>
+
+  <div class="callout warning">
+    <div class="callout-title">Symptôme</div>
+    Un job met plus de 6 minutes (anormalement lent) OU un job précis échoue.
+  </div>
+
+  <p><strong>Phrase à dire :</strong></p>
+  <p class="quote">Pour des raisons de gain de temps, je vais vous montrer le run de validation que j'ai exécuté hier soir. Il est strictement identique à celui qui vient de se déclencher.</p>
+
+  <p><strong>Action :</strong> bascule sur un run précédent (verts), continue la démo normalement comme si c'était le run actuel.</p>
+
+  <h2>🟠 Plan C — Internet meurt</h2>
+
+  <div class="callout warning">
+    <div class="callout-title">Symptôme</div>
+    Page GitHub Actions ne charge plus, Wi-Fi déconnecté, etc.
+  </div>
+
+  <p><strong>Action immédiate :</strong> active le partage de connexion de ton téléphone (préparé la veille).</p>
+
+  <p><strong>Si ça ne marche pas, phrase à dire :</strong></p>
+  <p class="quote">Permettez-moi, le temps que la connexion revienne, de vous montrer la vidéo de validation que j'ai enregistrée hier soir.</p>
+
+  <p><strong>Action :</strong> lance la vidéo OBS enregistrée la veille (4-5 min), commente par-dessus.</p>
+
+  <h2>🔴 Plan D — Tout casse (PC plante, vidéo perdue, etc.)</h2>
+
+  <p><strong>Action :</strong> bascule sur la présentation PowerPoint qui contient déjà 10 screenshots des résultats clés (intégrés la veille).</p>
+
+  <p><strong>Phrase à dire :</strong></p>
+  <p class="quote">Suite à un imprévu technique, permettez-moi de vous présenter les résultats à travers les screenshots de validation que nous avons préparés. Cela ne diminue en rien la qualité de notre travail — la pipeline a été exécutée avec succès à plusieurs reprises avant cette soutenance.</p>
+
+  <h2>⚠️ Réactions si le prof remet en cause quelque chose</h2>
+
+  <table>
+    <thead><tr><th>Si le prof dit...</th><th>Tu réponds...</th></tr></thead>
+    <tbody>
+      <tr><td>"Cette couverture est trop faible"</td><td>"Vous avez raison, c'est un choix assumé : nous testons la logique métier critique. L'évolution future est d'ajouter Testcontainers pour tester les DAOs avec une vraie Oracle."</td></tr>
+      <tr><td>"Pourquoi pas Kubernetes ?"</td><td>"Notre périmètre s'arrête à la Continuous Delivery. Le passage en Deployment vers K8s avec ArgoCD est documenté comme évolution future dans le rapport."</td></tr>
+      <tr><td>"Vous auriez dû faire X"</td><td>"C'est un point pertinent. Dans notre contexte, nous avons fait Y parce que [raison concrète]. Effectivement, X serait pertinent dans [autre contexte]."</td></tr>
+      <tr><td>"Vous ne comprenez pas vraiment Z"</td><td>Reste calme, ne mens pas. "Je n'ai pas tous les détails de Z en tête. Voici ce que je sais et comment j'aborderais le problème : [raisonnement à voix haute]."</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout danger">
+    <div class="callout-title">❌ Erreurs fatales à éviter</div>
+    <ul>
+      <li>Mentir si tu ne connais pas la réponse — toujours dire "je ne sais pas, voici comment j'aborderais le problème"</li>
+      <li>Critiquer le prof ou un choix imposé par le sujet</li>
+      <li>Dire "c'est juste un projet d'école" — dis "c'est un projet pédagogique qui applique les standards de l'industrie"</li>
+      <li>Lire ton script mot-à-mot — utilise-le comme support, pas comme béquille</li>
+      <li>Paniquer visuellement si quelque chose casse — toujours afficher du calme</li>
+    </ul>
+  </div>
+</section>
+
+<!-- =============================================================== ANNEXE C - CHECKLIST =============================================================== -->
+<section class="section">
+  <div class="chapter-number">Annexe C</div>
+  <h1>Checklist finale — la veille &amp; le jour J</h1>
+
+  <h2>📅 La veille au soir</h2>
+  <ul>
+    <li>☐ Lancer un pipeline "warmup" pour vérifier que tout passe vert</li>
+    <li>☐ Enregistrer la vidéo OBS de backup (~4-5 min de démo complète)</li>
+    <li>☐ Faire 10 screenshots clés à intégrer dans la présentation PowerPoint</li>
+    <li>☐ Imprimer cette feuille de script + le Guide de soutenance</li>
+    <li>☐ Préparer un .txt sur le bureau avec le message de commit pré-rédigé</li>
+    <li>☐ Charger le PC à 100%, brancher le chargeur dans le sac</li>
+    <li>☐ Mettre une bouteille d'eau dans le sac</li>
+  </ul>
+
+  <h2>🕐 1 heure avant la soutenance</h2>
+  <ul>
+    <li>☐ Lancer Docker Desktop (si pas déjà démarré)</li>
+    <li>☐ <code>docker compose up -d</code> pour préchauffer Oracle</li>
+    <li>☐ Vérifier <code>curl http://localhost:8081/api/livres</code> répond bien</li>
+    <li>☐ Ouvrir tous les onglets Chrome dans l'ordre</li>
+    <li>☐ Ouvrir VS Code sur le projet, terminal actif</li>
+    <li>☐ Lancer la présentation PowerPoint en mode présentation</li>
+    <li>☐ Tester <kbd>Alt</kbd>+<kbd>Tab</kbd> pour la navigation</li>
+  </ul>
+
+  <h2>⏱️ 5 minutes avant</h2>
+  <ul>
+    <li>☐ Brancher le câble HDMI/USB-C sur le projecteur, tester l'affichage</li>
+    <li>☐ Activer le partage de connexion sur le téléphone (en veille)</li>
+    <li>☐ Couper toutes les notifications (Slack, Discord, mails, Teams)</li>
+    <li>☐ Mode "Ne pas déranger" Windows activé</li>
+    <li>☐ Fermer Spotify, Steam, OneDrive sync, Skype, etc.</li>
+    <li>☐ Zoom Chrome à 110%, VS Code zoom à +2</li>
+    <li>☐ Une dernière vérification : pipeline déjà verte sur GitHub Actions</li>
+    <li>☐ Respirer profondément 3 fois</li>
+  </ul>
+
+  <h2>🎯 Le moment de vérité</h2>
+  <p>
+    <strong>Tu as 17 minutes</strong> pour démontrer 4 mois de travail. Suis le script. Reste calme.
+    Quand tu doutes, regarde le prof dans les yeux et continue.
+  </p>
+  <p>
+    Si quelque chose casse : <strong>silence de 2 secondes</strong>, sourire, puis <em>"je vais
+    contourner cela en vous montrant..."</em> et tu enchaînes vers le plan B.
+  </p>
+  <p>
+    À la fin, n'oublie pas la phrase d'ouverture aux questions :
+    <em>"Je vous remercie de votre attention. Nous sommes maintenant prêts à
+    répondre à vos questions."</em>
+  </p>
+</section>
+
+<!-- =============================================================== CLOTURE =============================================================== -->
+<section>
+  <h1 style="text-align: center; color: #DB2777; margin-top: 4rem;">Bonne soutenance ! 🎓</h1>
+  <p style="text-align: center; font-style: italic; color: #64748b; margin-top: 1rem;">
+    Tu es prêt(e). Tu connais ton projet mieux que personne dans la salle.<br>
+    Ton coéquipier et toi avez construit quelque chose de solide.<br>
+    Va le montrer avec confiance.<br><br>
+    <strong>Benoujeddi Amine · Habbass Achraf</strong><br>
+    Pipeline CI/CD Moderne Multi-Outils — 2025–2026
+  </p>
+</section>
+
+</div>
+
+</body>
+</html>

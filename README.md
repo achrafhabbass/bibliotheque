@@ -159,3 +159,5 @@ src/main/java/ma/bibliotheque/
 - Les mots de passe sont hachés en **SHA-256**.
 - Les sessions expirent après **30 minutes** d'inactivité.
 - Les cookies de session sont `HttpOnly`.
+
+Readme file 

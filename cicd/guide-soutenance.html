@@ -1,0 +1,2232 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Guide de Soutenance — Pipeline CI/CD BiblioGest</title>
+<style>
+  /* ============================================================
+     RESET & BASE
+     ============================================================ */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 14px; }
+  body {
+    font-family: 'Segoe UI', 'Inter', system-ui, -apple-system, sans-serif;
+    color: #0f172a;
+    line-height: 1.65;
+    background: #fff;
+  }
+
+  /* Container avec marges pour l'écran */
+  .container { max-width: 900px; margin: 0 auto; padding: 40px 60px; }
+
+  /* ============================================================
+     COVER PAGE
+     ============================================================ */
+  .cover {
+    min-height: 95vh;
+    background: linear-gradient(135deg, #0B1120 0%, #1E3A8A 50%, #6D28D9 100%);
+    color: white;
+    display: flex; flex-direction: column; justify-content: space-between;
+    padding: 80px 60px;
+    page-break-after: always;
+  }
+  .cover .eyebrow {
+    text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.2em;
+    color: #93c5fd; margin-bottom: 1rem;
+  }
+  .cover .module {
+    font-size: 1.3rem; color: #06B6D4; margin-bottom: 2.5rem;
+  }
+  .cover h1 {
+    font-size: 3.2rem; font-weight: 800; line-height: 1.1;
+    background: linear-gradient(135deg, #fff 0%, #93c5fd 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .cover .subtitle { font-size: 1.4rem; color: #cbd5e1; margin-top: 1rem; font-style: italic; }
+  .cover .divider {
+    height: 4px; width: 200px;
+    background: linear-gradient(90deg, #3B82F6, #A855F7);
+    margin: 3rem 0; border-radius: 2px;
+  }
+  .cover .meta-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 3rem;
+  }
+  .cover .meta-label {
+    font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.15em;
+    color: #94a3b8; margin-bottom: 0.5rem;
+  }
+  .cover .meta-value { font-size: 1.2rem; font-weight: 600; color: white; }
+  .cover .tags { margin-top: 2rem; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .cover .tag {
+    background: rgba(59,130,246,0.2); border: 1px solid rgba(59,130,246,0.4);
+    color: #dbeafe; padding: 0.3rem 0.8rem; border-radius: 16px;
+    font-size: 0.85rem;
+  }
+
+  /* ============================================================
+     TYPOGRAPHIE
+     ============================================================ */
+  h1, h2, h3, h4, h5 {
+    font-weight: 700; line-height: 1.25; color: #0f172a;
+  }
+  h1 { font-size: 2.2rem; margin: 2rem 0 1rem; color: #1e40af; }
+  h2 {
+    font-size: 1.6rem; margin: 2.5rem 0 1rem; padding-bottom: 0.4rem;
+    border-bottom: 3px solid #3B82F6; color: #1e40af;
+    page-break-after: avoid;
+  }
+  h3 {
+    font-size: 1.25rem; margin: 1.8rem 0 0.8rem; color: #0f172a;
+    page-break-after: avoid;
+  }
+  h4 { font-size: 1.05rem; margin: 1.2rem 0 0.5rem; color: #475569; }
+  p { margin: 0.8rem 0; }
+  ul, ol { margin: 0.8rem 0 0.8rem 1.5rem; }
+  li { margin: 0.25rem 0; }
+  strong { color: #1e293b; font-weight: 600; }
+  em { color: #475569; }
+  a { color: #2563eb; text-decoration: none; }
+
+  /* Numéros de chapitres */
+  .chapter-number {
+    display: inline-block;
+    font-size: 0.85rem; font-weight: 700;
+    color: #06B6D4; letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+
+  /* ============================================================
+     TABLE DES MATIÈRES
+     ============================================================ */
+  .toc {
+    background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;
+    padding: 2rem; margin: 2rem 0;
+    page-break-after: always;
+  }
+  .toc h2 { border: 0; margin-top: 0; }
+  .toc ol { list-style: none; padding-left: 0; }
+  .toc ol li { margin: 0.5rem 0; padding-left: 1.5rem; position: relative; }
+  .toc ol li::before {
+    content: counter(toc-counter, decimal-leading-zero);
+    counter-increment: toc-counter;
+    position: absolute; left: 0; color: #3B82F6; font-weight: 700;
+  }
+  .toc ol { counter-reset: toc-counter; }
+
+  /* ============================================================
+     CODE
+     ============================================================ */
+  code {
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.85em;
+    background: #f1f5f9; color: #be185d;
+    padding: 0.15em 0.4em; border-radius: 3px;
+  }
+  pre {
+    background: #0f172a; color: #e2e8f0;
+    padding: 1.2rem; border-radius: 8px;
+    overflow-x: auto;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.82em; line-height: 1.5;
+    margin: 1rem 0;
+    page-break-inside: avoid;
+  }
+  pre code { background: none; color: inherit; padding: 0; }
+  .lang-label {
+    background: #3B82F6; color: white;
+    display: inline-block; padding: 0.2rem 0.7rem;
+    border-radius: 4px 4px 0 0;
+    font-size: 0.75rem; font-family: monospace;
+    margin-bottom: -4px; position: relative; z-index: 1;
+  }
+
+  /* Couleurs simulées pour YAML/Java/Bash */
+  .k { color: #93c5fd; }     /* keyword */
+  .s { color: #fcd34d; }     /* string */
+  .c { color: #6b7280; font-style: italic; } /* comment */
+  .n { color: #fbbf24; }     /* number */
+  .t { color: #6ee7b7; }     /* type */
+
+  /* ============================================================
+     CALLOUTS (info, warning, tip, danger)
+     ============================================================ */
+  .callout {
+    border-left: 4px solid;
+    padding: 1rem 1.2rem;
+    margin: 1.5rem 0;
+    border-radius: 4px;
+    page-break-inside: avoid;
+  }
+  .callout-title { font-weight: 700; margin-bottom: 0.5rem; font-size: 0.95rem; }
+
+  .info    { background: #eff6ff; border-color: #3B82F6; }
+  .info .callout-title    { color: #1e40af; }
+  .tip     { background: #ecfdf5; border-color: #10B981; }
+  .tip .callout-title     { color: #047857; }
+  .warning { background: #fffbeb; border-color: #F59E0B; }
+  .warning .callout-title { color: #b45309; }
+  .danger  { background: #fef2f2; border-color: #ef4444; }
+  .danger .callout-title  { color: #b91c1c; }
+  .quote   { background: #faf5ff; border-color: #A855F7; font-style: italic; }
+  .quote .callout-title   { color: #7e22ce; font-style: normal; }
+
+  /* ============================================================
+     TABLEAUX
+     ============================================================ */
+  table {
+    width: 100%; border-collapse: collapse; margin: 1rem 0;
+    font-size: 0.9rem;
+    page-break-inside: avoid;
+  }
+  th {
+    background: #3B82F6; color: white;
+    padding: 0.7rem; text-align: left;
+    font-weight: 600; font-size: 0.85rem;
+  }
+  td {
+    padding: 0.6rem 0.7rem;
+    border-bottom: 1px solid #e2e8f0;
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background: #f8fafc; }
+
+  /* ============================================================
+     QUESTIONS DU PROF
+     ============================================================ */
+  .qa-block {
+    background: #f8fafc;
+    border-left: 4px solid #A855F7;
+    padding: 1.2rem 1.4rem;
+    margin: 1.2rem 0;
+    border-radius: 4px;
+    page-break-inside: avoid;
+  }
+  .qa-question {
+    font-weight: 700; color: #6d28d9;
+    margin-bottom: 0.6rem;
+    font-size: 1rem;
+  }
+  .qa-question::before { content: "❓ Q : "; }
+  .qa-answer { color: #1e293b; }
+  .qa-answer::before { content: "💡 R : "; font-weight: 700; color: #047857; }
+
+  /* ============================================================
+     SCHÉMAS ASCII
+     ============================================================ */
+  .ascii {
+    background: #0f172a; color: #93c5fd;
+    padding: 1.2rem; border-radius: 8px;
+    font-family: 'Cascadia Mono', 'Consolas', monospace;
+    font-size: 0.78rem; line-height: 1.4;
+    white-space: pre; overflow-x: auto;
+    margin: 1.5rem 0;
+    page-break-inside: avoid;
+  }
+
+  /* ============================================================
+     GLOSSAIRE
+     ============================================================ */
+  .glossary-term {
+    background: #fafafa;
+    padding: 1rem 1.2rem;
+    margin: 0.8rem 0;
+    border-left: 3px solid #06B6D4;
+    border-radius: 4px;
+    page-break-inside: avoid;
+  }
+  .glossary-name {
+    font-weight: 700; color: #0891b2;
+    font-size: 1.05rem;
+    margin-bottom: 0.4rem;
+  }
+  .glossary-simple { color: #475569; margin-bottom: 0.4rem; }
+  .glossary-tech { font-size: 0.92rem; color: #1e293b; margin-bottom: 0.4rem; }
+  .glossary-example {
+    font-size: 0.88rem; color: #047857;
+    background: #ecfdf5; padding: 0.4rem 0.6rem;
+    border-radius: 4px; margin-top: 0.4rem;
+  }
+  .glossary-example::before { content: "📌 Dans notre projet : "; font-weight: 600; }
+
+  /* ============================================================
+     PAGE BREAKS POUR L'IMPRESSION PDF
+     ============================================================ */
+  .page-break { page-break-after: always; }
+  .section { page-break-before: always; }
+  .section:first-of-type { page-break-before: avoid; }
+
+  /* ============================================================
+     PRINT MEDIA QUERIES (PDF EXPORT)
+     ============================================================ */
+  @media print {
+    html { font-size: 11pt; }
+    body { background: white; }
+    .container { padding: 0; max-width: none; }
+    pre, .callout, table, .qa-block, .ascii, .glossary-term {
+      page-break-inside: avoid;
+    }
+    h1, h2, h3 { page-break-after: avoid; }
+    a { color: #0f172a; text-decoration: none; }
+    .cover { min-height: 100vh; }
+  }
+
+  @page {
+    size: A4;
+    margin: 2cm;
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     COVER PAGE
+     ============================================================ -->
+<section class="cover">
+  <div>
+    <div class="eyebrow">Guide de soutenance — Année universitaire 2025–2026</div>
+    <div class="module">Module : Gestion des Projets IT</div>
+    <h1>Pipeline CI/CD Moderne<br>Multi-Outils</h1>
+    <div class="subtitle">Guide d'apprentissage complet basé sur le projet BiblioGest</div>
+    <div class="divider"></div>
+    <div class="tags">
+      <span class="tag">GitHub Actions</span>
+      <span class="tag">GitLab CI/CD</span>
+      <span class="tag">Jenkins</span>
+      <span class="tag">CircleCI</span>
+      <span class="tag">Travis CI</span>
+      <span class="tag">Docker</span>
+      <span class="tag">SonarCloud</span>
+      <span class="tag">Trivy</span>
+      <span class="tag">Slack</span>
+      <span class="tag">Java 17</span>
+      <span class="tag">Jakarta EE 10</span>
+    </div>
+  </div>
+  <div class="meta-grid">
+    <div>
+      <div class="meta-label">Encadré par</div>
+      <div class="meta-value">DR. Noureddine Mouhraram</div>
+    </div>
+    <div>
+      <div class="meta-label">Réalisé par</div>
+      <div class="meta-value">Benoujeddi Amine</div>
+      <div class="meta-value">Habbass Achraf</div>
+    </div>
+  </div>
+</section>
+
+<div class="container">
+
+<!-- ============================================================
+     TABLE DES MATIÈRES
+     ============================================================ -->
+<section class="toc">
+  <h2>📑 Table des matières</h2>
+  <ol>
+    <li><strong>Présentation générale du projet</strong> — objectifs, problématique, architecture</li>
+    <li><strong>L'application BiblioGest</strong> — architecture, API, structure des dossiers</li>
+    <li><strong>La pipeline CI/CD en détail</strong> — les 7 étapes job par job</li>
+    <li><strong>Les 16 outils utilisés</strong> — définition, rôle, fonctionnement</li>
+    <li><strong>Glossaire DevOps complet</strong> — 45+ termes techniques</li>
+    <li><strong>Analyse ligne par ligne de ci-cd.yml</strong> — décortiquage YAML</li>
+    <li><strong>Analyse du Dockerfile multi-stage</strong> — couches, sécurité, optimisation</li>
+    <li><strong>Analyse des tests</strong> — unitaires, intégration, JaCoCo, Mockito</li>
+    <li><strong>50 questions du professeur + réponses</strong> — préparation Q&amp;A</li>
+    <li><strong>Conseils de soutenance</strong> — vocabulaire pro, démo, attitude</li>
+  </ol>
+</section>
+
+<!-- ============================================================
+     SECTION 1 — PRÉSENTATION GÉNÉRALE
+     ============================================================ -->
+<section class="section">
+  <div class="chapter-number">Chapitre 01</div>
+  <h1>Présentation générale du projet</h1>
+
+  <h2>1.1 Objectif du projet</h2>
+  <p>
+    Ce projet s'inscrit dans le module <strong>Gestion des Projets IT</strong> et traite le
+    <strong>Sujet 1 : CI/CD moderne multi-outils</strong>. L'objectif est de démontrer la
+    maîtrise des concepts modernes d'intégration et de déploiement continus en
+    appliquant une pipeline CI/CD complète à une application web réelle.
+  </p>
+  <p>
+    L'application support, <strong>BiblioGest</strong>, est un système de gestion de bibliothèque
+    développé en Jakarta EE 10. Mais l'application n'est pas le cœur du projet : ce
+    qui compte, c'est la <strong>chaîne d'automatisation</strong> qui l'entoure.
+  </p>
+
+  <div class="callout info">
+    <div class="callout-title">💡 En une phrase</div>
+    À partir d'un simple <code>git push</code>, toute la chaîne d'intégration s'exécute
+    automatiquement : analyse de code → tests → qualité → packaging → containerisation
+    → scan de vulnérabilités → notification d'équipe. Sans aucune intervention humaine.
+  </div>
+
+  <h2>1.2 Problématique</h2>
+  <p>
+    Le développement logiciel moderne fait face à une contradiction : plus un projet
+    grandit, plus les tâches répétitives (compiler, tester, déployer) deviennent
+    chronophages et sources d'erreurs humaines.
+  </p>
+  <p>La CI/CD répond à cinq questions concrètes :</p>
+  <ol>
+    <li><strong>Comment garantir que le code compile sur la machine de chacun ?</strong>
+      → en l'exécutant sur un environnement standardisé à chaque push.</li>
+    <li><strong>Comment éviter les régressions ?</strong>
+      → en relançant tous les tests automatiquement à chaque modification.</li>
+    <li><strong>Comment livrer une version reproductible ?</strong>
+      → en générant un artifact (WAR + image Docker) versionné par commit.</li>
+    <li><strong>Comment garantir un niveau de qualité minimal ?</strong>
+      → en mesurant lint, couverture, complexité via Sonar et en bloquant le merge si seuil non atteint.</li>
+    <li><strong>Comment réduire la surface d'attaque sécurité ?</strong>
+      → en scannant les CVE de l'image avec Trivy à chaque build.</li>
+  </ol>
+
+  <h2>1.3 Architecture globale</h2>
+  <p>Le projet s'articule autour de trois couches :</p>
+
+  <div class="ascii">
+┌─────────────────────────────────────────────────────────────────────┐
+│                    COUCHE 1 — APPLICATION                           │
+│  BiblioGest : Jakarta EE 10, Tomcat 10.1, Hibernate, Oracle XE      │
+│  • Servlets + JSP (interface web)                                   │
+│  • JAX-RS /api/livres (API REST)                                    │
+└─────────────────────────────────────────────────────────────────────┘
+                              ↑
+                              │
+┌─────────────────────────────────────────────────────────────────────┐
+│                    COUCHE 2 — CI/CD PIPELINE                        │
+│  GitHub Actions orchestre 7 jobs :                                  │
+│  Lint → Tests → Qualité → Package → Docker → Sécurité → Notify     │
+└─────────────────────────────────────────────────────────────────────┘
+                              ↑
+                              │
+┌─────────────────────────────────────────────────────────────────────┐
+│                    COUCHE 3 — SERVICES EXTERNES                     │
+│  • SonarCloud (analyse qualité)                                     │
+│  • Docker Hub + GHCR (registre d'images)                            │
+│  • Trivy (scan CVE)                                                 │
+│  • Slack (notifications)                                            │
+└─────────────────────────────────────────────────────────────────────┘
+  </div>
+
+  <h2>1.4 Stack technologique complète</h2>
+
+  <table>
+    <thead>
+      <tr><th>Catégorie</th><th>Outil</th><th>Version</th><th>Rôle</th></tr>
+    </thead>
+    <tbody>
+      <tr><td rowspan="5"><strong>Application</strong></td><td>Java</td><td>17 LTS</td><td>Langage de base</td></tr>
+      <tr><td>Jakarta EE</td><td>10</td><td>Spécification entreprise</td></tr>
+      <tr><td>Apache Tomcat</td><td>10.1</td><td>Serveur d'applications</td></tr>
+      <tr><td>Hibernate</td><td>6.4</td><td>ORM (mapping objet-relationnel)</td></tr>
+      <tr><td>Oracle XE</td><td>21</td><td>Base de données</td></tr>
+      <tr><td rowspan="4"><strong>Build &amp; Test</strong></td><td>Maven</td><td>3.9</td><td>Build automation</td></tr>
+      <tr><td>JUnit Jupiter</td><td>5.10</td><td>Framework de tests</td></tr>
+      <tr><td>Mockito</td><td>5.11</td><td>Mocks pour tests d'intégration</td></tr>
+      <tr><td>JaCoCo</td><td>0.8.11</td><td>Couverture de code</td></tr>
+      <tr><td rowspan="2"><strong>Lint</strong></td><td>Checkstyle</td><td>10.14</td><td>Lint style</td></tr>
+      <tr><td>SpotBugs</td><td>4.8</td><td>Lint sémantique / bugs</td></tr>
+      <tr><td rowspan="5"><strong>CI/CD</strong></td><td>GitHub Actions</td><td>—</td><td>Pipeline principale</td></tr>
+      <tr><td>GitLab CI/CD</td><td>—</td><td>Pipeline alternative</td></tr>
+      <tr><td>Jenkins</td><td>—</td><td>Pipeline alternative</td></tr>
+      <tr><td>CircleCI</td><td>2.1</td><td>Pipeline alternative</td></tr>
+      <tr><td>Travis CI</td><td>—</td><td>Pipeline alternative</td></tr>
+      <tr><td rowspan="3"><strong>Qualité &amp; Sécurité</strong></td><td>SonarCloud</td><td>SaaS</td><td>Analyse qualité</td></tr>
+      <tr><td>SonarQube</td><td>10.4 Community</td><td>Alternative self-hosted</td></tr>
+      <tr><td>Trivy</td><td>latest</td><td>Scan CVE images Docker</td></tr>
+      <tr><td rowspan="3"><strong>Containerisation</strong></td><td>Docker</td><td>24+</td><td>Build / runtime conteneurs</td></tr>
+      <tr><td>Docker Hub</td><td>SaaS</td><td>Registre public</td></tr>
+      <tr><td>GHCR</td><td>SaaS</td><td>Registre GitHub</td></tr>
+      <tr><td><strong>Notification</strong></td><td>Slack</td><td>SaaS</td><td>Webhook de notification</td></tr>
+    </tbody>
+  </table>
+
+  <h2>1.5 Workflow CI/CD logique</h2>
+  <p>Le flux complet, du commit jusqu'à la notification d'équipe :</p>
+
+  <div class="ascii">
+DÉVELOPPEUR                  GITHUB                    SERVICES EXTERNES
+
+   git push  ──────────────►  Webhook
+                              déclenche le pipeline
+                                  │
+                                  ▼
+                              ┌─────────┐
+                              │  LINT   │  Checkstyle + SpotBugs
+                              └────┬────┘  → rapport XML
+                                   ▼
+                              ┌─────────┐
+                              │  TESTS  │  JUnit + Mockito
+                              └────┬────┘  → JaCoCo XML
+                                   ▼
+                          ┌────────┴────────┐
+                          ▼                 ▼
+                      ┌────────┐       ┌─────────┐
+                      │QUALITÉ │──────►│SonarCloud│  Analyse qualité
+                      └────────┘       └─────────┘
+                          ▼
+                      ┌────────┐
+                      │PACKAGE │  Build WAR Maven
+                      └───┬────┘
+                          ▼
+                      ┌────────┐
+                      │ DOCKER │──────► Docker Hub + GHCR
+                      └───┬────┘        (push image taggée)
+                          ▼
+                      ┌────────┐
+                      │SÉCURITÉ│──────► Trivy → SARIF → GitHub Security
+                      └───┬────┘
+                          ▼
+                      ┌────────┐
+                      │ NOTIFY │──────► Slack #bibliogest-ci
+                      └────────┘        message ✅ ou ❌
+  </div>
+
+</section>
+
+<!-- ============================================================
+     SECTION 2 — L'APPLICATION BIBLIOGEST
+     ============================================================ -->
+<section class="section">
+  <div class="chapter-number">Chapitre 02</div>
+  <h1>L'application BiblioGest</h1>
+
+  <h2>2.1 Description fonctionnelle</h2>
+  <p>
+    BiblioGest est une application web de gestion de bibliothèque. Les
+    utilisateurs authentifiés (managers ou administrateurs) gèrent :
+  </p>
+  <ul>
+    <li><strong>Le catalogue</strong> : livres, auteurs, catégories</li>
+    <li><strong>Les clients</strong> : inscriptions, contacts</li>
+    <li><strong>Les emprunts</strong> : prêts, retours, calcul automatique des frais et pénalités</li>
+    <li><strong>Les utilisateurs</strong> : gestion des comptes (admin uniquement)</li>
+  </ul>
+
+  <h3>Règles métier</h3>
+  <ul>
+    <li>Un livre marqué <em>non disponible</em> ne peut pas être emprunté.</li>
+    <li>Un client ne peut avoir qu'<em>un emprunt EN_COURS</em> par livre.</li>
+    <li>À la création d'un emprunt : <code>frais = dureeJours × tarifJournalier</code>.</li>
+    <li>Au retour avec retard : <code>pénalité = joursExcès × tarifJournalier × 1.5</code>.</li>
+    <li>La suppression du <em>dernier administrateur</em> est bloquée.</li>
+  </ul>
+
+  <h2>2.2 Architecture en couches</h2>
+  <p>L'application suit le pattern MVC classique de Jakarta EE :</p>
+
+  <div class="ascii">
+┌──────────────────────────────────────────────────────────┐
+│  VUE        JSP + Tailwind CSS + JSTL                    │
+│             (rendu côté serveur)                         │
+└────────────────────────┬─────────────────────────────────┘
+                         │
+┌────────────────────────┴─────────────────────────────────┐
+│  CONTRÔLEUR Servlets (@WebServlet) + JAX-RS              │
+│             Pattern Post-Redirect-Get                    │
+│             AuthFilter, AdminFilter, EncodingFilter      │
+└────────────────────────┬─────────────────────────────────┘
+                         │
+┌────────────────────────┴─────────────────────────────────┐
+│  MODÈLE     Entités JPA + DAOs (transactions manuelles)  │
+│             Hibernate 6 / RESOURCE_LOCAL                 │
+└────────────────────────┬─────────────────────────────────┘
+                         │
+┌────────────────────────┴─────────────────────────────────┐
+│  PERSISTANCE Oracle XE 21 / XEPDB1                       │
+│              9 tables + 7 séquences                      │
+└──────────────────────────────────────────────────────────┘
+  </div>
+
+  <h2>2.3 Structure des dossiers</h2>
+
+<pre><code>bibliotheque/
+├── <span class="k">.github/workflows/</span>
+│   └── ci-cd.yml                ← Pipeline GitHub Actions
+├── <span class="k">.gitlab-ci.yml</span>                ← Pipeline GitLab
+├── <span class="k">Jenkinsfile</span>                   ← Pipeline Jenkins
+├── <span class="k">.circleci/config.yml</span>          ← Pipeline CircleCI
+├── <span class="k">.travis.yml</span>                   ← Pipeline Travis CI
+├── <span class="k">Dockerfile</span>                    ← Image multi-stage
+├── <span class="k">docker-compose.yml</span>            ← Stack app + Oracle
+├── <span class="k">docker-compose.sonarqube.yml</span>  ← SonarQube self-hosted
+├── <span class="k">checkstyle.xml</span>                ← Règles de lint
+├── <span class="k">sonar-project.properties</span>      ← Config Sonar
+├── <span class="k">pom.xml</span>                       ← Build Maven
+├── <span class="k">schema.sql / data.sql</span>         ← Initialisation Oracle
+└── <span class="k">src/</span>
+    ├── main/
+    │   ├── java/ma/bibliotheque/
+    │   │   ├── util/         → JpaUtil, PasswordUtil, BiblioUtils
+    │   │   ├── entities/     → Livre, Auteur, Client, Emprunt...
+    │   │   ├── dao/          → GenericDao + 6 DAOs
+    │   │   ├── servlet/      → Login, Logout, CRUD servlets
+    │   │   ├── rest/         → LivreResource, JaxRsApp
+    │   │   └── filter/       → AuthFilter, AdminFilter
+    │   ├── resources/META-INF/persistence.xml
+    │   └── webapp/
+    │       ├── WEB-INF/web.xml + JSPs
+    │       └── index.jsp
+    └── test/java/ma/bibliotheque/
+        ├── unit/             → *Test.java (Surefire)
+        └── integration/      → *IT.java  (Failsafe)</code></pre>
+
+  <h2>2.4 Rôle des fichiers clés</h2>
+
+  <h3>Côté application</h3>
+  <table>
+    <thead><tr><th>Fichier</th><th>Rôle</th></tr></thead>
+    <tbody>
+      <tr><td><code>JpaUtil.java</code></td><td>Crée l'EntityManagerFactory au démarrage (utilise variables d'env DB_URL, DB_USER, DB_PASSWORD).</td></tr>
+      <tr><td><code>BiblioUtils.java</code></td><td>Logique métier pure (frais, pénalités). <strong>Pas de dépendance JPA</strong> → testable sans DB.</td></tr>
+      <tr><td><code>PasswordUtil.java</code></td><td>Hachage SHA-256 des mots de passe.</td></tr>
+      <tr><td><code>LivreResource.java</code></td><td>Ressource JAX-RS exposant <code>/api/livres</code>. Constructeur public pour injection de DAO mocké.</td></tr>
+      <tr><td><code>AuthFilter.java</code></td><td>Intercepte toutes les requêtes sauf <code>/login</code> et <code>/api/*</code>.</td></tr>
+      <tr><td><code>persistence.xml</code></td><td>Config JPA : driver Oracle, dialecte Hibernate, paramètres JDBC.</td></tr>
+      <tr><td><code>web.xml</code></td><td>Mappings Servlets/Filters, ordre des filtres, mapping Jersey sur <code>/api/*</code>.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Côté CI/CD &amp; DevOps</h3>
+  <table>
+    <thead><tr><th>Fichier</th><th>Rôle</th></tr></thead>
+    <tbody>
+      <tr><td><code>.github/workflows/ci-cd.yml</code></td><td>Workflow principal — 7 jobs en YAML.</td></tr>
+      <tr><td><code>pom.xml</code></td><td>Déclare 6 plugins Maven : surefire, failsafe, jacoco, sonar, checkstyle, spotbugs.</td></tr>
+      <tr><td><code>Dockerfile</code></td><td>Multi-stage : <em>builder</em> (Maven) → <em>runtime</em> (Tomcat).</td></tr>
+      <tr><td><code>docker-compose.yml</code></td><td>Oracle XE + app, avec <code>condition: service_healthy</code>.</td></tr>
+      <tr><td><code>checkstyle.xml</code></td><td>Règles de lint en mode informational.</td></tr>
+      <tr><td><code>sonar-project.properties</code></td><td>Chemins sources/tests/binaries + rapport JaCoCo.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>2.5 L'API REST exposée</h2>
+  <p>Une seule ressource JAX-RS, exposée sur <code>/api/livres</code> :</p>
+
+  <table>
+    <thead><tr><th>Méthode</th><th>URL</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td>GET</td><td><code>/api/livres</code></td><td>Liste tous les livres avec auteurs et catégories</td></tr>
+      <tr><td>GET</td><td><code>/api/livres?q=etranger</code></td><td>Recherche par mot-clé</td></tr>
+      <tr><td>GET</td><td><code>/api/livres?disponible=true</code></td><td>Filtre par disponibilité</td></tr>
+      <tr><td>GET</td><td><code>/api/livres/{id}</code></td><td>Un livre par identifiant</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout tip">
+    <div class="callout-title">🎯 Pourquoi cette route est cruciale en CI/CD</div>
+    Elle sert de <strong>healthcheck</strong> pour Docker (<code>HEALTHCHECK CMD wget /api/livres</code>)
+    et de <strong>cible de test d'intégration</strong> (<code>LivreResourceIT</code> mocke le DAO et
+    teste les codes HTTP retournés). C'est donc le point de contrôle public de l'application.
+  </div>
+
+</section>
+
+<!-- ============================================================
+     SECTION 3 — PIPELINE CI/CD
+     ============================================================ -->
+<section class="section">
+  <div class="chapter-number">Chapitre 03</div>
+  <h1>La pipeline CI/CD en détail</h1>
+
+  <p>
+    La pipeline est composée de <strong>7 jobs</strong> qui s'enchaînent dans un graphe de
+    dépendances (DAG). Ce chapitre décrypte chaque job : son rôle, ce qu'il fait
+    techniquement, les commandes qu'il exécute, ses outputs, ses risques et les
+    erreurs fréquemment rencontrées.
+  </p>
+
+  <div class="ascii">
+[1.Lint] → [2.Tests] → [3.Quality]
+              │
+              └─► [4.Package] → [5.Docker] → [6.Security] → [7.Notify]
+  </div>
+
+  <!-- ──────────────────────────────────────────── -->
+  <h2>3.1 Job 1 — Lint (Checkstyle + SpotBugs)</h2>
+
+  <h3>Rôle</h3>
+  <p>
+    Effectuer l'<strong>analyse statique du code source</strong> avant même de tenter une
+    compilation complète ou des tests. C'est la première barrière de qualité :
+    elle attrape les défauts visibles à l'œil (style, conventions) et certains
+    bugs sémantiques (NPE potentielles, ressources non fermées).
+  </p>
+
+  <h3>Pourquoi il existe ?</h3>
+  <p>
+    Coût d'un bug détecté à différents stades (étude IBM, ordre de grandeur) :
+  </p>
+  <ul>
+    <li>Lint local : ×1</li>
+    <li>Test unitaire : ×5</li>
+    <li>Test d'intégration : ×15</li>
+    <li>Production : ×100</li>
+  </ul>
+  <p>Plus le bug est attrapé tôt, moins il coûte. Le lint est l'étape la plus précoce.</p>
+
+  <h3>Ce qu'il fait techniquement</h3>
+  <ol>
+    <li>Checkout du code source</li>
+    <li>Installation de Java 17 Temurin + activation du cache Maven</li>
+    <li>Exécution de <code>mvn -B checkstyle:check</code></li>
+    <li>Compilation préalable (<code>mvn -B compile -DskipTests</code>)</li>
+    <li>Exécution de <code>mvn -B spotbugs:check</code></li>
+    <li>Upload des rapports XML comme artefacts GitHub</li>
+  </ol>
+
+  <h3>Outputs générés</h3>
+  <ul>
+    <li><code>target/checkstyle-result.xml</code> — 177 violations dans notre cas</li>
+    <li><code>target/spotbugsXml.xml</code> — 32 bugs détectés</li>
+    <li>Artifact <strong>lint-reports</strong> téléchargeable depuis l'UI GitHub</li>
+  </ul>
+
+  <h3>Risques &amp; erreurs fréquentes</h3>
+  <table>
+    <thead><tr><th>Symptôme</th><th>Cause</th><th>Solution</th></tr></thead>
+    <tbody>
+      <tr><td>Build échoue avec 100+ violations</td><td>Mode strict activé sur code legacy</td><td>Passer en mode informational : <code>&lt;failOnViolation&gt;false&lt;/failOnViolation&gt;</code></td></tr>
+      <tr><td><code>Could not find checkstyle.xml</code></td><td>Chemin relatif incorrect</td><td>Vérifier que <code>checkstyle.xml</code> est à la racine du projet</td></tr>
+      <tr><td>SpotBugs ne trouve aucune classe</td><td>Compilation pas faite avant</td><td>Toujours <code>mvn compile</code> avant <code>spotbugs:check</code></td></tr>
+    </tbody>
+  </table>
+
+  <!-- ──────────────────────────────────────────── -->
+  <h2>3.2 Job 2 — Tests (JUnit + JaCoCo)</h2>
+
+  <h3>Rôle</h3>
+  <p>
+    Exécuter les tests <strong>unitaires</strong> (logique pure) puis les tests
+    <strong>d'intégration</strong> (couche REST avec mocks), et générer un rapport de
+    couverture JaCoCo qui alimentera SonarCloud.
+  </p>
+
+  <h3>Pourquoi il existe ?</h3>
+  <p>
+    Les tests sont le <strong>filet de sécurité</strong> qui empêche les régressions. Sans tests
+    automatiques, chaque modification doit être validée manuellement — irréaliste
+    à l'échelle d'une équipe. La pipeline garantit que <em>tous</em> les tests passent
+    sur <em>tous</em> les commits avant qu'on puisse merger.
+  </p>
+
+  <h3>Ce qu'il fait techniquement</h3>
+  <pre><code><span class="k">mvn</span> test    <span class="c">- exécute *Test.java (Surefire)</span>
+<span class="k">mvn</span> verify  <span class="c">- exécute *IT.java (Failsafe) + agrégation JaCoCo</span></code></pre>
+
+  <h3>Outputs</h3>
+  <ul>
+    <li><code>target/surefire-reports/TEST-*.xml</code> — résultats unitaires</li>
+    <li><code>target/failsafe-reports/TEST-*.xml</code> — résultats d'intégration</li>
+    <li><code>target/site/jacoco/jacoco.xml</code> — rapport de couverture (consommé par Sonar)</li>
+    <li><code>target/site/jacoco/index.html</code> — rapport HTML cliquable</li>
+  </ul>
+
+  <h3>Statistiques du projet</h3>
+  <ul>
+    <li>Tests unitaires : <strong>15</strong> (BiblioUtilsTest + PasswordUtilTest)</li>
+    <li>Tests d'intégration : <strong>6</strong> (LivreResourceIT)</li>
+    <li>Total : <strong>21 tests</strong>, durée moyenne ~10 s</li>
+    <li>Couverture : ~8 % (volontairement faible, focus sur la logique métier)</li>
+  </ul>
+
+  <h3>Risques &amp; erreurs fréquentes</h3>
+  <table>
+    <thead><tr><th>Symptôme</th><th>Cause</th><th>Solution</th></tr></thead>
+    <tbody>
+      <tr><td><code>ExceptionInInitializerError JpaUtil</code></td><td>Test instancie un DAO → JpaUtil tente de se connecter à Oracle absent</td><td>N'instancier que des mocks dans les tests</td></tr>
+      <tr><td>Couverture 0% sur le rapport Sonar</td><td>JaCoCo XML pas généré ou chemin incorrect</td><td>Vérifier <code>&lt;execution&gt;&lt;goals&gt;&lt;goal&gt;prepare-agent&lt;/goal&gt;</code></td></tr>
+      <tr><td>Tests passent localement, échouent en CI</td><td>Différences de locale, fuseau horaire, encodage</td><td>Fixer le timezone via <code>TZ=UTC</code> dans le workflow</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ──────────────────────────────────────────── -->
+  <h2>3.3 Job 3 — Quality (SonarCloud)</h2>
+
+  <h3>Rôle</h3>
+  <p>
+    Envoyer le code source et le rapport JaCoCo à SonarCloud pour une analyse
+    qualité approfondie : bugs, vulnérabilités, code smells, hotspots de sécurité,
+    duplication, couverture, dette technique. SonarCloud calcule ensuite une
+    <strong>Quality Gate</strong> (note A à E) qui peut bloquer le merge.
+  </p>
+
+  <h3>Pourquoi il existe ?</h3>
+  <p>
+    Le lint local détecte les défauts évidents. Sonar va beaucoup plus loin :
+    il croise une base de plus de 600 règles, applique des heuristiques de
+    sécurité (OWASP, CWE), mesure la complexité cyclomatique, et compare avec
+    le code de référence. C'est l'outil de qualité <em>standard de l'industrie</em>.
+  </p>
+
+  <h3>Ce qu'il fait techniquement</h3>
+  <pre><code><span class="k">mvn</span> -B verify sonar:sonar \
+  -Dsonar.projectKey=$SONAR_PROJECT_KEY \
+  -Dsonar.organization=$SONAR_ORGANIZATION \
+  -Dsonar.host.url=<span class="s">https://sonarcloud.io</span></code></pre>
+
+  <h3>Outputs</h3>
+  <p>
+    Aucun fichier local. Les résultats sont visibles sur le dashboard SonarCloud :
+    <code>sonarcloud.io/dashboard?id=achrafhabbass_bibliotheque</code>.
+  </p>
+
+  <h3>Risques &amp; erreurs fréquentes</h3>
+  <table>
+    <thead><tr><th>Symptôme</th><th>Cause</th><th>Solution</th></tr></thead>
+    <tbody>
+      <tr><td><code>"" is not a valid project key</code></td><td>Variable <code>SONAR_PROJECT_KEY</code> vide</td><td>Vérifier l'onglet Variables dans GitHub Secrets</td></tr>
+      <tr><td><code>Not authorized</code></td><td>Token Sonar incorrect ou expiré</td><td>Régénérer le token sur sonarcloud.io</td></tr>
+      <tr><td>Analyse vide / "0 lines analyzed"</td><td>Automatic Analysis encore activée</td><td>Désactiver dans Administration → Analysis Method</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ──────────────────────────────────────────── -->
+  <h2>3.4 Job 4 — Package (Build WAR)</h2>
+
+  <h3>Rôle</h3>
+  <p>
+    Produire l'<strong>artefact applicatif livrable</strong> : le fichier WAR. C'est ce qui
+    sera ensuite copié dans l'image Docker au job suivant.
+  </p>
+
+  <h3>Pourquoi il existe ?</h3>
+  <p>
+    Le packaging est <strong>l'étape de matérialisation</strong> : tant qu'on n'a qu'un
+    arbre de fichiers <code>target/classes/</code>, on n'a rien de déployable. Le WAR
+    compresse tout en un binaire unique, versionné, archivable, déployable.
+  </p>
+
+  <h3>Ce qu'il fait techniquement</h3>
+  <pre><code><span class="k">mvn</span> package -DskipTests -B --no-transfer-progress</code></pre>
+
+  <p>
+    On utilise <code>-DskipTests</code> ici parce que les tests ont déjà été exécutés
+    au job précédent — pas besoin de les relancer.
+  </p>
+
+  <h3>Outputs</h3>
+  <ul>
+    <li><code>target/bibliotheque.war</code> — ~33 Mo</li>
+    <li>Artifact GitHub nommé <strong>bibliotheque-war</strong> téléchargeable 7 jours</li>
+  </ul>
+
+  <!-- ──────────────────────────────────────────── -->
+  <h2>3.5 Job 5 — Docker (Build + Push)</h2>
+
+  <h3>Rôle</h3>
+  <p>
+    Construire l'<strong>image Docker</strong> qui contient le WAR + Tomcat configuré, puis
+    la <strong>publier</strong> sur deux registres : Docker Hub (public) et GitHub Container
+    Registry (intégré au repo).
+  </p>
+
+  <h3>Pourquoi il existe ?</h3>
+  <p>
+    Un WAR seul ne suffit pas : il faut un serveur d'application configuré
+    autour. L'image Docker capture <em>toute</em> l'infrastructure runtime — JVM,
+    Tomcat, dépendances système, variables d'environnement. C'est ce qu'on appelle
+    le principe <strong>"build once, run anywhere"</strong>.
+  </p>
+
+  <h3>Ce qu'il fait techniquement</h3>
+  <ol>
+    <li>Configuration Docker Buildx (build multi-plateforme)</li>
+    <li>Authentification Docker Hub via <code>docker/login-action</code></li>
+    <li>Authentification GHCR via <code>GITHUB_TOKEN</code> (automatique)</li>
+    <li>Génération de tags via <code>docker/metadata-action</code> :
+      <ul>
+        <li><code>latest</code> (toujours la dernière version)</li>
+        <li><code>&lt;sha-du-commit&gt;</code> (immutable, traçable)</li>
+      </ul>
+    </li>
+    <li>Build + push simultané vers les deux registres</li>
+  </ol>
+
+  <h3>Outputs</h3>
+  <ul>
+    <li><code>achrafhb/bibliotheque:latest</code> sur Docker Hub</li>
+    <li><code>ghcr.io/achrafhabbass/bibliotheque:latest</code> sur GHCR</li>
+    <li>Mêmes images également taggées avec le SHA du commit</li>
+  </ul>
+
+  <h3>Risques &amp; erreurs fréquentes</h3>
+  <table>
+    <thead><tr><th>Symptôme</th><th>Cause</th><th>Solution</th></tr></thead>
+    <tbody>
+      <tr><td><code>Username and password required</code></td><td>Secrets <code>DOCKER_USERNAME</code>/<code>DOCKER_PASSWORD</code> vides</td><td>Créer les secrets dans GitHub</td></tr>
+      <tr><td><code>denied: requested access denied</code></td><td>Username incorrect ou token sans permissions Write</td><td>Régénérer un token avec scope Read/Write/Delete</td></tr>
+      <tr><td>Push GHCR retourne 403</td><td>Manque <code>permissions: packages: write</code></td><td>Ajouter le bloc <code>permissions</code> au job</td></tr>
+      <tr><td>Image énorme (1 Go+)</td><td>Dockerfile single-stage</td><td>Passer en multi-stage (cf. chapitre 7)</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ──────────────────────────────────────────── -->
+  <h2>3.6 Job 6 — Security Scan (Trivy)</h2>
+
+  <h3>Rôle</h3>
+  <p>
+    Scanner l'image Docker fraîchement publiée à la recherche de CVE (Common
+    Vulnerabilities and Exposures) connues : paquets OS, dépendances Java,
+    mauvaises configurations, secrets exposés.
+  </p>
+
+  <h3>Pourquoi il existe ?</h3>
+  <p>
+    Sonar regarde le <em>code source</em>. Trivy regarde l'<em>image livrée</em>.
+    C'est la dernière barrière avant que l'image ne parte en production. Un seul
+    paquet vulnérable (ex: <code>openssl</code> avec CVE-2024-XYZ critique) peut suffire
+    à compromettre tout le serveur — d'où l'intérêt du scan systématique.
+  </p>
+
+  <h3>Ce qu'il fait techniquement</h3>
+  <ol>
+    <li>Scan en mode <code>table</code> pour l'affichage humain dans les logs</li>
+    <li>Scan en mode <code>sarif</code> pour upload vers GitHub Security</li>
+    <li>Upload du SARIF via <code>github/codeql-action/upload-sarif</code></li>
+  </ol>
+
+  <h3>Outputs</h3>
+  <ul>
+    <li>Logs CLI avec tableau des CVE par sévérité</li>
+    <li>Onglet <strong>Security</strong> du repo GitHub peuplé avec les vulnérabilités</li>
+  </ul>
+
+  <!-- ──────────────────────────────────────────── -->
+  <h2>3.7 Job 7 — Notify (Slack)</h2>
+
+  <h3>Rôle</h3>
+  <p>
+    Notifier l'équipe via Slack à la fin de chaque pipeline, avec un statut
+    coloré (vert = succès, rouge = échec) et des liens directs vers le run.
+  </p>
+
+  <h3>Pourquoi il existe ?</h3>
+  <p>
+    Personne ne va manuellement vérifier l'onglet Actions à chaque commit. La
+    notification automatique est le seul moyen d'avoir une <strong>boucle de
+    feedback courte</strong> entre push et statut. C'est la pierre angulaire du
+    "fail fast" en CI/CD.
+  </p>
+
+  <h3>Ce qu'il fait techniquement</h3>
+  <ol>
+    <li>Step <code>status</code> : calcule succès / échec via <code>contains(needs.*.result, 'failure')</code></li>
+    <li>Step <code>slack</code> : POST JSON formaté vers le webhook Slack</li>
+  </ol>
+
+  <h3>Particularité</h3>
+  <p>
+    Le job a <code>if: always()</code> — il s'exécute même si un job précédent a échoué.
+    C'est volontaire : on veut être notifié <em>surtout</em> en cas d'échec.
+  </p>
+
+</section>
+
+<!-- ============================================================
+     SECTION 4 — LES OUTILS
+     ============================================================ -->
+<section class="section">
+  <div class="chapter-number">Chapitre 04</div>
+  <h1>Les 16 outils utilisés</h1>
+
+  <h2>4.1 GitHub Actions ⭐ (outil principal)</h2>
+  <p><strong>Définition simple</strong> : service d'automatisation intégré à GitHub qui exécute des workflows à chaque événement Git.</p>
+  <p><strong>Rôle dans le projet</strong> : moteur principal de la pipeline. Le fichier <code>.github/workflows/ci-cd.yml</code> définit les 7 jobs.</p>
+  <p><strong>Fonctionnement interne</strong> : à chaque push, GitHub déclenche un <strong>runner</strong> (VM Ubuntu) qui clone le repo et exécute les steps. Les jobs peuvent dépendre les uns des autres via <code>needs:</code>. Les actions de la marketplace sont des modules réutilisables (ex: <code>actions/checkout@v4</code>).</p>
+  <p><strong>Vocabulaire technique</strong> : workflow, job, step, runner, marketplace, action, artifact, secret, variable, environment, matrix build, reusable workflow.</p>
+  <p><strong>Avantages</strong> : marketplace de 21 000+ actions, gratuit illimité pour OSS, intégration native GitHub, syntaxe YAML lisible, support multi-OS (Ubuntu, Windows, macOS).</p>
+  <p><strong>Inconvénients</strong> : verrouillage à GitHub, quota plus limité pour repos privés, debugging en SSH non disponible nativement.</p>
+  <p><strong>Cas d'usage en entreprise</strong> : startups et équipes hébergées sur GitHub. Microsoft, GitHub eux-mêmes, Vercel, Stripe l'utilisent en interne.</p>
+
+  <h2>4.2 GitLab CI/CD</h2>
+  <p><strong>Définition simple</strong> : système CI/CD natif de la plateforme GitLab.</p>
+  <p><strong>Rôle dans le projet</strong> : pipeline alternative démontrée dans <code>.gitlab-ci.yml</code>.</p>
+  <p><strong>Fonctionnement</strong> : pipeline organisée en <em>stages</em> séquentiels. Tous les jobs d'un même stage tournent en parallèle. Runners auto-hébergeables ou shared.</p>
+  <p><strong>Vocabulaire</strong> : stage, job, runner, pipeline, artifact, cache, rules, needs, environment, deploy, manual job.</p>
+  <p><strong>Avantages</strong> : DevOps tout-en-un (SCM + CI + registry + monitoring), interface visualisation excellente, self-hosted très mature.</p>
+  <p><strong>Inconvénients</strong> : marketplace plus restreint qu'Actions, syntaxe <code>rules:</code> complexe.</p>
+
+  <h2>4.3 Jenkins</h2>
+  <p><strong>Définition simple</strong> : serveur d'automatisation open-source historique (depuis 2011), 100% self-hosted.</p>
+  <p><strong>Rôle dans le projet</strong> : pipeline alternative démontrée dans <code>Jenkinsfile</code>.</p>
+  <p><strong>Fonctionnement</strong> : un serveur Jenkins lance des "agents" (workers). Chaque pipeline est définie en <strong>Groovy DSL</strong> dans un <code>Jenkinsfile</code> versionné avec le code.</p>
+  <p><strong>Vocabulaire</strong> : pipeline (declarative vs scripted), stage, step, agent, node, plugin, credentials, build, parameter, trigger.</p>
+  <p><strong>Avantages</strong> : 100% open source, 1 900+ plugins, flexibilité maximale, intégration aux outils legacy d'entreprise (LDAP, AD, JIRA).</p>
+  <p><strong>Inconvénients</strong> : courbe d'apprentissage élevée, maintenance plugins, UI vieillissante, pas de mode SaaS officiel.</p>
+
+  <h2>4.4 CircleCI</h2>
+  <p><strong>Définition simple</strong> : plateforme CI/CD SaaS axée performance et réutilisabilité.</p>
+  <p><strong>Rôle dans le projet</strong> : pipeline alternative démontrée dans <code>.circleci/config.yml</code>.</p>
+  <p><strong>Fonctionnement</strong> : workflows composés de jobs, chaque job tourne dans un <em>executor</em> (Docker, machine VM, macOS). Les <strong>orbs</strong> sont des modules YAML réutilisables.</p>
+  <p><strong>Vocabulaire</strong> : workflow, job, executor, orb, resource class, workspace, parallelism, approval job.</p>
+  <p><strong>Avantages</strong> : performances élevées, debugging SSH dans le runner, multi-VCS (GitHub, GitLab, Bitbucket).</p>
+  <p><strong>Inconvénients</strong> : plan gratuit limité (6 000 min/mois), moins d'intégrations natives qu'Actions.</p>
+
+  <h2>4.5 Travis CI</h2>
+  <p><strong>Définition simple</strong> : pionnier des CI/CD SaaS pour OSS, en déclin depuis 2021.</p>
+  <p><strong>Rôle dans le projet</strong> : pipeline alternative démontrée dans <code>.travis.yml</code>.</p>
+  <p><strong>Fonctionnement</strong> : syntaxe minimaliste, configure le langage et exécute des scripts.</p>
+  <p><strong>Avantages</strong> : la syntaxe la plus concise des cinq moteurs, idéal pour démarrer.</p>
+  <p><strong>Inconvénients</strong> : plan gratuit OSS supprimé en 2021, communauté en fuite vers GitHub Actions.</p>
+
+  <h2>4.6 Docker</h2>
+  <p><strong>Définition simple</strong> : technologie de conteneurisation qui empaquette une application avec toutes ses dépendances dans un environnement isolé et portable.</p>
+  <p><strong>Rôle dans le projet</strong> : utilisé pour le packaging final (image runtime) et pour le développement local (Oracle XE + app dans <code>docker-compose.yml</code>).</p>
+  <p><strong>Fonctionnement interne</strong> : Docker utilise les <em>namespaces</em> et <em>cgroups</em> du noyau Linux pour isoler processus, réseau, filesystem. Une image est constituée de <strong>couches</strong> en lecture seule (un <em>layer</em> par instruction du Dockerfile) ; le conteneur ajoute une couche en lecture/écriture.</p>
+  <p><strong>Vocabulaire</strong> : image, container, layer, Dockerfile, registry, tag, volume, network, healthcheck, ENTRYPOINT, CMD, multi-stage build.</p>
+  <p><strong>Avantages</strong> : reproductibilité, isolation, légèreté (vs VM), écosystème massif.</p>
+  <p><strong>Inconvénients</strong> : courbe d'apprentissage initiale, sécurité demande de la rigueur (user non-root, scan CVE).</p>
+
+  <h2>4.7 SonarCloud / SonarQube</h2>
+  <p><strong>Définition simple</strong> : plateforme d'analyse continue de la qualité du code.</p>
+  <p><strong>Différence</strong> : SonarQube = on-premise (à installer). SonarCloud = SaaS (cloud Sonar). Même moteur d'analyse, deux modes de déploiement.</p>
+  <p><strong>Rôle dans le projet</strong> : analyse de qualité après chaque push sur main.</p>
+  <p><strong>Fonctionnement</strong> : 600+ règles couvrant bugs, vulnérabilités (OWASP, CWE), code smells, hotspots de sécurité, duplication. Note Quality Gate (A à E) basée sur des seuils configurables.</p>
+  <p><strong>Vocabulaire</strong> : Quality Gate, code smell, technical debt, hotspot, coverage, duplication, reliability, maintainability, security rating.</p>
+
+  <h2>4.8 Maven</h2>
+  <p><strong>Définition simple</strong> : outil de build et de gestion de dépendances pour Java.</p>
+  <p><strong>Rôle dans le projet</strong> : compile, teste, package, lance Sonar, lance Checkstyle, lance SpotBugs.</p>
+  <p><strong>Fonctionnement</strong> : suit le cycle de vie standard (<code>validate → compile → test → package → verify → install → deploy</code>). Le <code>pom.xml</code> déclare dépendances et plugins.</p>
+  <p><strong>Vocabulaire</strong> : POM, dependency, scope (compile, provided, test, runtime), plugin, goal, phase, lifecycle, profile, repository.</p>
+
+  <h2>4.9 JUnit 5</h2>
+  <p><strong>Définition simple</strong> : framework de tests automatisés pour Java.</p>
+  <p><strong>Rôle</strong> : écrire et exécuter les tests unitaires et d'intégration.</p>
+  <p><strong>Vocabulaire</strong> : <code>@Test</code>, <code>@BeforeEach</code>, <code>@AfterEach</code>, assertion, fixture, parameterized test, dynamic test, extension.</p>
+
+  <h2>4.10 Mockito</h2>
+  <p><strong>Définition simple</strong> : librairie de mocking pour Java.</p>
+  <p><strong>Rôle dans le projet</strong> : remplacer le <code>LivreDao</code> par un mock dans <code>LivreResourceIT</code> pour ne pas dépendre d'Oracle.</p>
+  <p><strong>Vocabulaire</strong> : mock, stub, spy, verify, when/then, ArgumentCaptor, MockitoExtension.</p>
+
+  <h2>4.11 JaCoCo</h2>
+  <p><strong>Définition simple</strong> : outil de mesure de couverture de code.</p>
+  <p><strong>Rôle</strong> : générer le rapport XML que SonarCloud consomme pour afficher la couverture.</p>
+  <p><strong>Fonctionnement</strong> : instrumente le bytecode Java au runtime via un agent JVM, mesure quelles lignes/branches sont exécutées par les tests.</p>
+  <p><strong>Vocabulaire</strong> : instruction coverage, branch coverage, line coverage, complexity coverage, exclusion.</p>
+
+  <h2>4.12 Trivy</h2>
+  <p><strong>Définition simple</strong> : scanner de vulnérabilités pour conteneurs Docker.</p>
+  <p><strong>Rôle</strong> : scan CVE de l'image après publication.</p>
+  <p><strong>Fonctionnement</strong> : compare les paquets installés dans l'image avec une base de vulnérabilités à jour (NVD, GHSA, etc.).</p>
+  <p><strong>Vocabulaire</strong> : CVE, CVSS, SARIF, severity, ignore-unfixed, vulnerability database.</p>
+
+  <h2>4.13 Slack</h2>
+  <p><strong>Définition simple</strong> : messagerie d'équipe avec API webhook.</p>
+  <p><strong>Rôle</strong> : recevoir les notifications de fin de pipeline.</p>
+  <p><strong>Fonctionnement</strong> : un <em>Incoming Webhook</em> est une URL HTTPS qui accepte des POST JSON pour poster des messages dans un canal.</p>
+
+  <h2>4.14 GitHub Secrets</h2>
+  <p><strong>Définition simple</strong> : coffre-fort chiffré pour les valeurs sensibles (tokens, mots de passe).</p>
+  <p><strong>Fonctionnement</strong> : chiffrement asymétrique côté navigateur avec la clé publique du repo. Déchiffrement <em>juste-à-temps</em> dans le runner. Masquage automatique dans les logs avec <code>***</code>.</p>
+  <p><strong>Bonne pratique</strong> : un secret ne quitte JAMAIS le vault. Si exposé : rotation immédiate, enquête après.</p>
+
+  <h2>4.15 Docker Hub</h2>
+  <p><strong>Définition simple</strong> : registre Docker public (et privé) historique.</p>
+  <p><strong>Rôle</strong> : héberger l'image <code>achrafhb/bibliotheque</code>.</p>
+  <p><strong>Vocabulaire</strong> : repository, tag, manifest, layer, pull rate limit, Personal Access Token.</p>
+
+  <h2>4.16 GitHub Container Registry (GHCR)</h2>
+  <p><strong>Définition simple</strong> : registre Docker intégré à GitHub.</p>
+  <p><strong>Avantages</strong> : authentification automatique via <code>GITHUB_TOKEN</code>, intégration native au repo, pas de rate limit Docker Hub.</p>
+  <p><strong>Image</strong> : <code>ghcr.io/achrafhabbass/bibliotheque</code>.</p>
+
+</section>
+
+<!-- ============================================================
+     SECTION 5 — GLOSSAIRE
+     ============================================================ -->
+<section class="section">
+  <div class="chapter-number">Chapitre 05</div>
+  <h1>Glossaire DevOps complet</h1>
+
+  <p>
+    Plus de 45 termes essentiels du vocabulaire DevOps / CI-CD, expliqués
+    simplement, techniquement, avec un exemple concret tiré de notre projet.
+  </p>
+
+  <div class="glossary-term">
+    <div class="glossary-name">CI — Continuous Integration</div>
+    <div class="glossary-simple">Pratique consistant à fusionner et tester le code fréquemment et automatiquement.</div>
+    <div class="glossary-tech">Chaque push déclenche compilation + tests + analyse statique pour détecter les régressions au plus tôt.</div>
+    <div class="glossary-example">notre workflow GitHub Actions teste 21 cas à chaque commit sur main ou develop.</div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="glossary-name">CD — Continuous Delivery / Deployment</div>
+    <div class="glossary-simple">Continuous Delivery = l'artefact est prêt à déployer mais le déploiement reste manuel. Continuous Deployment = déploiement automatique en production.</div>
+    <div class="glossary-tech">Notre pipeline est en mode <em>Delivery</em> : on publie l'image Docker mais pas le déploiement en prod.</div>
+    <div class="glossary-example">l'image <code>achrafhb/bibliotheque:latest</code> est publiée, mais on n'a pas de cluster Kubernetes qui la consomme automatiquement.</div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="glossary-name">DevOps</div>
+    <div class="glossary-simple">Culture et ensemble de pratiques qui unifient développement (Dev) et exploitation (Ops).</div>
+    <div class="glossary-tech">Objectifs : réduire le délai entre code et production, automatiser, mesurer, partager les responsabilités.</div>
+    <div class="glossary-example">notre pipeline matérialise cette culture : un seul push déclenche test, qualité, build, sécurité, notification.</div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="glossary-name">Pipeline</div>
+    <div class="glossary-simple">Suite ordonnée d'étapes automatisées qui transforment le code en artefact déployable.</div>
+    <div class="glossary-tech">Représenté sous forme de graphe orienté acyclique (DAG) où chaque nœud est un job.</div>
+    <div class="glossary-example">notre pipeline a 7 nœuds : lint → tests → quality → package → docker → security → notify.</div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="glossary-name">Workflow</div>
+    <div class="glossary-simple">Définition d'une pipeline complète (terminologie GitHub Actions).</div>
+    <div class="glossary-tech">Fichier YAML stocké dans <code>.github/workflows/</code>, déclenché par un événement.</div>
+    <div class="glossary-example">notre fichier <code>ci-cd.yml</code> est notre seul workflow.</div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="glossary-name">Job</div>
+    <div class="glossary-simple">Unité d'exécution dans un workflow.</div>
+    <div class="glossary-tech">Un job tourne sur un seul runner, exécute une séquence de steps, peut dépendre d'autres jobs via <code>needs:</code>.</div>
+    <div class="glossary-example">notre job <code>lint</code> tourne sur <code>ubuntu-latest</code> et lance Checkstyle + SpotBugs.</div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="glossary-name">Step</div>
+    <div class="glossary-simple">Une instruction individuelle dans un job (commande ou appel à une action).</div>
+    <div class="glossary-tech">Un step utilise soit <code>run:</code> (commande shell) soit <code>uses:</code> (action de la marketplace).</div>
+    <div class="glossary-example"><code>- uses: actions/checkout@v4</code> est un step qui clone le repo.</div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="glossary-name">Stage</div>
+    <div class="glossary-simple">Groupe logique de jobs (terminologie GitLab CI/Jenkins).</div>
+    <div class="glossary-tech">Tous les jobs d'un même stage tournent en parallèle ; le stage suivant attend la fin du précédent.</div>
+    <div class="glossary-example">notre <code>.gitlab-ci.yml</code> déclare 7 stages : lint, test, quality, package, docker, security, notify.</div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="glossary-name">Runner / Agent</div>
+    <div class="glossary-simple">La machine (VM, conteneur ou physique) qui exécute les jobs.</div>
+    <div class="glossary-tech">Peut être <em>hosted</em> (fourni par la plateforme) ou <em>self-hosted</em> (votre propre infra).</div>
+    <div class="glossary-example">nos jobs tournent sur des runners <code>ubuntu-latest</code> fournis gratuitement par GitHub.</div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="glossary-name">Trigger</div>
+    <div class="glossary-simple">Événement qui déclenche l'exécution d'une pipeline.</div>
+    <div class="glossary-tech">Push, PR, cron, déclenchement manuel, webhook externe, fin d'un autre workflow.</div>
+    <div class="glossary-example">notre pipeline est déclenchée par <code>on: push: branches: [main, develop]</code>.</div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="glossary-name">Artifact</div>
+    <div class="glossary-simple">Fichier produit par un job, transmis aux jobs suivants ou archivé.</div>
+    <div class="glossary-tech">Stocké hors du runtime du job, téléchargeable via l'UI, durée de rétention configurable.</div>
+    <div class="glossary-example">notre WAR <code>target/bibliotheque.war</code> est uploadé comme artifact <em>bibliotheque-war</em>, conservé 7 jours.</div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="glossary-name">Secret</div>
+    <div class="glossary-simple">Variable sensible (token, mot de passe) injectée dans le runtime sans apparaître dans les logs.</div>
+    <div class="glossary-tech">Chiffré au repos dans le vault de la plateforme, masqué dans les logs avec <code>***</code>.</div>
+    <div class="glossary-example"><code>DOCKER_PASSWORD</code>, <code>SONAR_TOKEN</code>, <code>SLACK_WEBHOOK_URL</code>.</div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="glossary-name">Cache</div>
+    <div class="glossary-simple">Répertoire conservé entre exécutions pour accélérer les builds.</div>
+    <div class="glossary-tech">Évite de re-télécharger les dépendances Maven/npm à chaque run.</div>
+    <div class="glossary-example"><code>actions/setup-java@v4</code> avec <code>cache: maven</code> conserve <code>~/.m2/repository</code> entre les runs.</div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="glossary-name">Container</div>
+    <div class="glossary-simple">Instance d'exécution isolée d'une image Docker.</div>
+    <div class="glossary-tech">Utilise les <em>namespaces</em> et <em>cgroups</em> du noyau Linux pour l'isolation.</div>
+    <div class="glossary-example"><code>bibliotheque-app</code> et <code>oracle-xe</code> sont nos deux conteneurs.</div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="glossary-name">Image Docker</div>
+    <div class="glossary-simple">Template immutable contenant une application + ses dépendances.</div>
+    <div class="glossary-tech">Constituée de couches superposées en lecture seule, identifiée par un hash SHA-256.</div>
+    <div class="glossary-example"><code>achrafhb/bibliotheque:latest</code> contient Tomcat 10.1 + JDK 17 + notre WAR.</div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="glossary-name">Registry</div>
+    <div class="glossary-simple">Service de stockage et distribution d'images Docker.</div>
+    <div class="glossary-tech">Public (Docker Hub, GHCR, Quay) ou privé (AWS ECR, Azure ACR, Harbor).</div>
+    <div class="glossary-example">on push sur Docker Hub <em>et</em> GHCR pour la redondance.</div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="glossary-name">Layer</div>
+    <div class="glossary-simple">Couche d'une image Docker, créée par chaque instruction du Dockerfile.</div>
+    <div class="glossary-tech">Les couches sont mises en cache pour éviter de tout reconstruire à chaque build.</div>
+    <div class="glossary-example">notre <code>FROM tomcat:10.1-jdk17-temurin</code> télécharge ~15 couches préexistantes.</div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="glossary-name">Multi-stage build</div>
+    <div class="glossary-simple">Dockerfile qui utilise plusieurs <code>FROM</code> pour séparer compilation et runtime.</div>
+    <div class="glossary-tech">Permet de ne livrer que les artefacts finaux sans les outils de compilation.</div>
+    <div class="glossary-example">notre Dockerfile a 2 stages : <code>builder</code> (Maven) et <code>runtime</code> (Tomcat).</div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="glossary-name">Lint</div>
+    <div class="glossary-simple">Analyse statique qui détecte les défauts de style ou de logique sans exécuter le code.</div>
+    <div class="glossary-tech">Outils : Checkstyle, SpotBugs, ESLint, RuboCop, etc.</div>
+    <div class="glossary-example">notre job <code>lint</code> exécute Checkstyle (style) et SpotBugs (sémantique).</div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="glossary-name">Static Analysis</div>
+    <div class="glossary-simple">Analyse du code source sans l'exécuter.</div>
+    <div class="glossary-tech">Trouve bugs potentiels, vulnérabilités, complexité, duplication.</div>
+    <div class="glossary-example">SonarCloud applique 600+ règles statiques sur notre code à chaque push sur main.</div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="glossary-name">Unit Test</div>
+    <div class="glossary-simple">Test d'une unité de code isolée (une méthode, une classe).</div>
+    <div class="glossary-tech">Pas de dépendance externe (DB, réseau, filesystem). Rapide (millisecondes).</div>
+    <div class="glossary-example"><code>PasswordUtilTest.hashFaitSoixanteQuatreCaracteres()</code> teste uniquement la classe utilitaire.</div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="glossary-name">Integration Test</div>
+    <div class="glossary-simple">Test qui vérifie la collaboration entre plusieurs composants.</div>
+    <div class="glossary-tech">Peut nécessiter une vraie DB, un serveur, ou utiliser des mocks pour rester rapide.</div>
+    <div class="glossary-example"><code>LivreResourceIT</code> teste la couche REST en mockant le DAO avec Mockito.</div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="glossary-name">Mock</div>
+    <div class="glossary-simple">Objet factice qui simule le comportement d'une vraie dépendance.</div>
+    <div class="glossary-tech">Permet d'isoler le code testé sans démarrer la vraie dépendance.</div>
+    <div class="glossary-example"><code>@Mock LivreDao dao;</code> dans <code>LivreResourceIT</code> remplace le DAO Hibernate par un mock Mockito.</div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="glossary-name">Coverage</div>
+    <div class="glossary-simple">Pourcentage du code source exécuté par les tests.</div>
+    <div class="glossary-tech">Plusieurs métriques : line, branch, instruction, complexity, method, class.</div>
+    <div class="glossary-example">notre rapport JaCoCo affiche ~8% line coverage car on ne teste que la logique métier pure.</div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="glossary-name">Build</div>
+    <div class="glossary-simple">Processus de transformation du code source en artefact exécutable.</div>
+    <div class="glossary-tech">Compile + assemble dépendances + package.</div>
+    <div class="glossary-example"><code>mvn package</code> produit <code>target/bibliotheque.war</code>.</div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="glossary-name">Packaging</div>
+    <div class="glossary-simple">Empaquetage de l'application et ses dépendances dans un format livrable.</div>
+    <div class="glossary-tech">Formats : JAR, WAR, EAR (Java) ; tarball, zip ; image Docker ; package OS (rpm, deb).</div>
+    <div class="glossary-example">notre WAR (33 Mo) puis notre image Docker (~250 Mo).</div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="glossary-name">Deployment</div>
+    <div class="glossary-simple">Mise en production d'un artefact (déploiement).</div>
+    <div class="glossary-tech">Stratégies : blue-green, canary, rolling, in-place.</div>
+    <div class="glossary-example">non couvert par notre pipeline (Continuous Delivery, pas Deployment).</div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="glossary-name">Orchestration</div>
+    <div class="glossary-simple">Coordination de plusieurs conteneurs (déploiement, scaling, healing).</div>
+    <div class="glossary-tech">Outils : Kubernetes, Docker Swarm, Nomad.</div>
+    <div class="glossary-example">notre <code>docker-compose</code> est une orchestration locale simple (deux conteneurs).</div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="glossary-name">YAML</div>
+    <div class="glossary-simple">Format de fichier de configuration humainement lisible (YAML = "YAML Ain't Markup Language").</div>
+    <div class="glossary-tech">Structure par indentation, pas d'accolades. Pièges : tabs interdites, ":" sensibles aux espaces.</div>
+    <div class="glossary-example">tous nos fichiers CI/CD (sauf Jenkinsfile en Groovy) sont en YAML.</div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="glossary-name">Quality Gate</div>
+    <div class="glossary-simple">Critère d'acceptation automatique (SonarCloud).</div>
+    <div class="glossary-tech">Définit des seuils sur coverage, dette, hotspots. Note A à E. Peut bloquer le merge.</div>
+    <div class="glossary-example">notre QG par défaut requiert 80%+ coverage sur le code modifié.</div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="glossary-name">Healthcheck</div>
+    <div class="glossary-simple">Sonde qui vérifie qu'un service répond correctement.</div>
+    <div class="glossary-tech">Docker : <code>HEALTHCHECK CMD curl /health</code>. K8s : liveness + readiness probes.</div>
+    <div class="glossary-example">notre Dockerfile fait <code>wget /api/livres</code> toutes les 30s.</div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="glossary-name">CVE</div>
+    <div class="glossary-simple">Common Vulnerabilities and Exposures — identifiant standard des failles de sécurité.</div>
+    <div class="glossary-tech">Format : <code>CVE-YYYY-NNNNN</code>. Score CVSS de 0 à 10.</div>
+    <div class="glossary-example">Trivy scanne notre image et reporte les CVE des paquets OS et Java.</div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="glossary-name">SARIF</div>
+    <div class="glossary-simple">Static Analysis Results Interchange Format — format JSON standardisé pour les rapports d'analyse.</div>
+    <div class="glossary-tech">Norme OASIS, consommée par GitHub Security, Azure DevOps, etc.</div>
+    <div class="glossary-example">Trivy produit un fichier SARIF uploadé via <code>codeql-action/upload-sarif</code>.</div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="glossary-name">Webhook</div>
+    <div class="glossary-simple">URL HTTP qui reçoit des événements automatiquement.</div>
+    <div class="glossary-tech">Quand l'événement survient, l'émetteur fait un POST JSON vers l'URL.</div>
+    <div class="glossary-example">Slack expose un <em>Incoming Webhook</em> qui reçoit nos notifications de fin de pipeline.</div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="glossary-name">Marketplace</div>
+    <div class="glossary-simple">Bibliothèque d'actions/plugins réutilisables.</div>
+    <div class="glossary-tech">GitHub Marketplace, GitLab Catalog, Jenkins Plugins, CircleCI Orbs.</div>
+    <div class="glossary-example">on utilise <code>actions/checkout@v4</code>, <code>docker/login-action@v3</code>, <code>slackapi/slack-github-action@v1.27.0</code>.</div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="glossary-name">DAG — Directed Acyclic Graph</div>
+    <div class="glossary-simple">Graphe orienté sans cycle, modélise les dépendances entre jobs.</div>
+    <div class="glossary-tech">Plus flexible que les stages séquentiels — permet des branchements arbitraires.</div>
+    <div class="glossary-example">GitHub Actions utilise un DAG via <code>needs:</code> (notre <code>quality</code> et <code>package</code> dépendent de <code>test</code> mais sont parallèles entre eux).</div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="glossary-name">Idempotence</div>
+    <div class="glossary-simple">Propriété d'une opération qui peut être exécutée plusieurs fois sans changer le résultat final.</div>
+    <div class="glossary-tech">Critère essentiel pour les déploiements automatiques fiables.</div>
+    <div class="glossary-example"><code>docker pull</code> est idempotent ; <code>git push</code> aussi.</div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="glossary-name">Rollback</div>
+    <div class="glossary-simple">Retour à une version précédente après un déploiement raté.</div>
+    <div class="glossary-tech">Facilité par le versioning des images Docker (tag par SHA).</div>
+    <div class="glossary-example">si <code>achrafhb/bibliotheque:latest</code> casse, on peut redéployer <code>achrafhb/bibliotheque:5117780</code>.</div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="glossary-name">Quality Profile</div>
+    <div class="glossary-simple">Ensemble de règles d'analyse SonarCloud appliquées à un projet.</div>
+    <div class="glossary-tech">Personnalisable par langage. Hérité ou custom.</div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="glossary-name">Technical Debt</div>
+    <div class="glossary-simple">Estimation du temps nécessaire pour corriger tous les code smells (SonarCloud).</div>
+    <div class="glossary-tech">Exprimé en heures-homme. Outil de priorisation pour le refactoring.</div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="glossary-name">Code Smell</div>
+    <div class="glossary-simple">Symptôme dans le code qui suggère un problème plus profond (mais pas un bug direct).</div>
+    <div class="glossary-tech">Ex : méthode trop longue, variables non utilisées, complexité élevée.</div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="glossary-name">Hotspot</div>
+    <div class="glossary-simple">Portion de code à risque qui mérite une revue humaine (Sonar).</div>
+    <div class="glossary-tech">Différent d'une vulnérabilité confirmée — c'est un "à vérifier".</div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="glossary-name">Cyclomatic Complexity</div>
+    <div class="glossary-simple">Mesure du nombre de chemins indépendants dans une fonction.</div>
+    <div class="glossary-tech">Calculée à partir du graphe de contrôle. Seuil critique : >10.</div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="glossary-name">Fail Fast</div>
+    <div class="glossary-simple">Philosophie de pipeline : faire échouer le job le plus tôt possible.</div>
+    <div class="glossary-tech">L'ordre <code>lint → tests → build</code> permet de détecter les défauts en quelques secondes plutôt qu'en plusieurs minutes.</div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="glossary-name">Smoke Test</div>
+    <div class="glossary-simple">Test minimal de bon fonctionnement après déploiement.</div>
+    <div class="glossary-tech">Ex : "l'application répond sur /health en moins de 5s".</div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="glossary-name">Reproducible Build</div>
+    <div class="glossary-simple">Build qui produit toujours le même artefact à partir du même code source.</div>
+    <div class="glossary-tech">Critique pour la sécurité (supply chain) et le debugging.</div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="glossary-name">Pinning</div>
+    <div class="glossary-simple">Verrouillage d'une version précise d'une dépendance.</div>
+    <div class="glossary-tech">Évite les régressions liées aux mises à jour automatiques. Trade-off : maintenance.</div>
+    <div class="glossary-example">on pin <code>actions/checkout@v4</code> (majeur) plutôt que <code>@latest</code>.</div>
+  </div>
+
+</section>
+
+<!-- ============================================================
+     SECTION 6 — ANALYSE DE ci-cd.yml
+     ============================================================ -->
+<section class="section">
+  <div class="chapter-number">Chapitre 06</div>
+  <h1>Analyse ligne par ligne de ci-cd.yml</h1>
+
+  <h2>6.1 En-tête du workflow</h2>
+
+  <pre><code><span class="k">name:</span> BiblioGest CI/CD
+
+<span class="k">on:</span>
+  <span class="k">push:</span>
+    <span class="k">branches:</span> [main, develop]
+  <span class="k">pull_request:</span>
+    <span class="k">branches:</span> [main]
+
+<span class="k">env:</span>
+  <span class="k">JAVA_VERSION:</span> <span class="s">'17'</span>
+  <span class="k">JAVA_DISTRIBUTION:</span> <span class="s">'temurin'</span>
+  <span class="k">IMAGE_NAME:</span> bibliotheque</code></pre>
+
+  <p><strong>Explication :</strong></p>
+  <ul>
+    <li><code>name:</code> nom affiché dans l'UI GitHub.</li>
+    <li><code>on:</code> définit les <em>triggers</em>. Ici : tout push sur main ou develop, et toute PR vers main.</li>
+    <li><code>env:</code> variables d'environnement globales accessibles à tous les jobs via <code>${{ env.X }}</code>.</li>
+  </ul>
+
+  <h2>6.2 Bloc <code>jobs:</code></h2>
+  <p>Chaque job suit le même schéma. Décortiquage du job <code>lint</code> :</p>
+
+  <pre><code><span class="k">lint:</span>
+  <span class="k">name:</span> <span class="s">"Lint (Checkstyle + SpotBugs)"</span>
+  <span class="k">runs-on:</span> ubuntu-latest
+
+  <span class="k">steps:</span>
+    <span class="c">- # Step 1 : récupère le code source</span>
+    - <span class="k">name:</span> Checkout du code
+      <span class="k">uses:</span> actions/checkout@v4
+
+    <span class="c">- # Step 2 : installe Java + active cache Maven</span>
+    - <span class="k">name:</span> Installation de Java <span class="s">${{ env.JAVA_VERSION }}</span>
+      <span class="k">uses:</span> actions/setup-java@v4
+      <span class="k">with:</span>
+        <span class="k">java-version:</span> <span class="s">${{ env.JAVA_VERSION }}</span>
+        <span class="k">distribution:</span> <span class="s">${{ env.JAVA_DISTRIBUTION }}</span>
+        <span class="k">cache:</span> maven
+
+    <span class="c">- # Step 3 : Checkstyle</span>
+    - <span class="k">name:</span> Checkstyle
+      <span class="k">run:</span> mvn -B checkstyle:check --no-transfer-progress
+
+    <span class="c">- # Step 4 : Compilation préalable pour SpotBugs</span>
+    - <span class="k">name:</span> Compilation préalable
+      <span class="k">run:</span> mvn -B compile -DskipTests --no-transfer-progress
+
+    <span class="c">- # Step 5 : SpotBugs (continue-on-error pour mode informational)</span>
+    - <span class="k">name:</span> SpotBugs
+      <span class="k">run:</span> mvn -B spotbugs:check --no-transfer-progress
+      <span class="k">continue-on-error:</span> true
+
+    <span class="c">- # Step 6 : upload des rapports comme artifact</span>
+    - <span class="k">name:</span> Publication des rapports de lint
+      <span class="k">if:</span> always()
+      <span class="k">uses:</span> actions/upload-artifact@v4
+      <span class="k">with:</span>
+        <span class="k">name:</span> lint-reports
+        <span class="k">path:</span> |
+          target/checkstyle-result.xml
+          target/spotbugsXml.xml</code></pre>
+
+  <h3>Décodage</h3>
+  <ul>
+    <li><code>runs-on: ubuntu-latest</code> : runner Ubuntu fourni par GitHub (gratuit).</li>
+    <li><code>steps:</code> liste séquentielle d'étapes.</li>
+    <li><code>uses:</code> appelle une action de la marketplace (notation <code>owner/name@version</code>).</li>
+    <li><code>run:</code> exécute une commande shell sur le runner.</li>
+    <li><code>continue-on-error: true</code> : le step peut échouer sans casser le job.</li>
+    <li><code>if: always()</code> : ce step s'exécute même si un step précédent a échoué.</li>
+  </ul>
+
+  <h2>6.3 Le mécanisme <code>needs:</code></h2>
+
+  <pre><code><span class="k">quality:</span>
+  <span class="k">needs:</span> test
+  <span class="k">if:</span> github.ref == <span class="s">'refs/heads/main'</span></code></pre>
+
+  <p>Cette ligne signifie :</p>
+  <ul>
+    <li>Le job <code>quality</code> ne démarre qu'après que <code>test</code> ait réussi.</li>
+    <li>Il ne s'exécute que sur la branche <code>main</code> (pas sur develop ni sur les PR).</li>
+  </ul>
+
+  <h2>6.4 Le job docker — multi-registry</h2>
+
+  <pre><code><span class="k">docker:</span>
+  <span class="k">needs:</span> package
+  <span class="k">if:</span> github.ref == <span class="s">'refs/heads/main'</span>
+  <span class="k">permissions:</span>
+    <span class="k">contents:</span> read
+    <span class="k">packages:</span> write
+
+  <span class="k">steps:</span>
+    - <span class="k">uses:</span> docker/login-action@v3
+      <span class="k">with:</span>
+        <span class="k">username:</span> <span class="s">${{ secrets.DOCKER_USERNAME }}</span>
+        <span class="k">password:</span> <span class="s">${{ secrets.DOCKER_PASSWORD }}</span>
+
+    - <span class="k">uses:</span> docker/login-action@v3
+      <span class="k">with:</span>
+        <span class="k">registry:</span> ghcr.io
+        <span class="k">username:</span> <span class="s">${{ github.actor }}</span>
+        <span class="k">password:</span> <span class="s">${{ secrets.GITHUB_TOKEN }}</span>
+
+    - <span class="k">id:</span> meta
+      <span class="k">uses:</span> docker/metadata-action@v5
+      <span class="k">with:</span>
+        <span class="k">images:</span> |
+          <span class="s">${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}</span>
+          ghcr.io/<span class="s">${{ github.repository_owner }}/${{ env.IMAGE_NAME }}</span>
+        <span class="k">tags:</span> |
+          type=raw,value=latest
+          type=sha,prefix=,format=long
+
+    - <span class="k">uses:</span> docker/build-push-action@v5
+      <span class="k">with:</span>
+        <span class="k">push:</span> true
+        <span class="k">tags:</span> <span class="s">${{ steps.meta.outputs.tags }}</span>
+        <span class="k">cache-from:</span> type=gha
+        <span class="k">cache-to:</span> type=gha,mode=max</code></pre>
+
+  <p>Points-clés :</p>
+  <ul>
+    <li><code>permissions: packages: write</code> : <strong>obligatoire</strong> pour pousser sur GHCR.</li>
+    <li>Deux <code>docker/login-action</code> consécutifs : Docker Hub + GHCR.</li>
+    <li><code>docker/metadata-action</code> : génère automatiquement les tags (<code>latest</code> + SHA).</li>
+    <li><code>cache-from: type=gha</code> : utilise le cache GitHub Actions pour les layers Docker.</li>
+  </ul>
+
+  <h2>6.5 Le job notify — Slack</h2>
+
+  <pre><code><span class="k">notify:</span>
+  <span class="k">needs:</span> [lint, test, quality, package, docker, security-scan]
+  <span class="k">if:</span> always() && github.ref == <span class="s">'refs/heads/main'</span>
+
+  <span class="k">steps:</span>
+    - <span class="k">id:</span> status
+      <span class="k">run:</span> |
+        <span class="k">if</span> [ <span class="s">"${{ contains(needs.*.result, 'failure') }}"</span> = <span class="s">"true"</span> ]; <span class="k">then</span>
+          echo <span class="s">"text=Pipeline ECHOUEE"</span> >> $GITHUB_OUTPUT
+          echo <span class="s">"color=danger"</span> >> $GITHUB_OUTPUT
+        <span class="k">else</span>
+          echo <span class="s">"text=Pipeline REUSSIE"</span> >> $GITHUB_OUTPUT
+          echo <span class="s">"color=good"</span> >> $GITHUB_OUTPUT
+        <span class="k">fi</span></code></pre>
+
+  <p>Points-clés :</p>
+  <ul>
+    <li><code>needs: [...]</code> : dépend de <em>tous</em> les jobs (sinon notification serait précoce).</li>
+    <li><code>if: always()</code> : notifie aussi en cas d'échec (sinon, on ne saurait jamais quand ça casse).</li>
+    <li><code>contains(needs.*.result, 'failure')</code> : expression GitHub qui scanne tous les résultats.</li>
+    <li><code>$GITHUB_OUTPUT</code> : fichier spécial pour passer des valeurs entre steps.</li>
+  </ul>
+
+</section>
+
+<!-- ============================================================
+     SECTION 7 — DOCKERFILE
+     ============================================================ -->
+<section class="section">
+  <div class="chapter-number">Chapitre 07</div>
+  <h1>Analyse du Dockerfile multi-stage</h1>
+
+  <h2>7.1 Le concept multi-stage</h2>
+
+  <p>Un Dockerfile <strong>simple</strong> (single-stage) ressemble à :</p>
+  <pre><code><span class="k">FROM</span> maven:3.9-temurin-17
+<span class="k">COPY</span> . /app
+<span class="k">RUN</span> mvn package
+<span class="k">CMD</span> [<span class="s">"java"</span>, <span class="s">"-jar"</span>, <span class="s">"/app/target/app.war"</span>]</code></pre>
+
+  <p>
+    Problème : l'image finale contient Maven (~200 Mo), le JDK complet, le code
+    source, le cache des dépendances. Au total ~1 Go. C'est gros, lent à puller, et
+    présente une surface d'attaque inutile en production.
+  </p>
+
+  <p>Le multi-stage résout ce problème en séparant <strong>build</strong> et <strong>runtime</strong> :</p>
+
+  <h2>7.2 Notre Dockerfile</h2>
+
+  <pre><code><span class="c"># ===== Stage 1 : Build Maven =====</span>
+<span class="k">FROM</span> maven:3.9-eclipse-temurin-17 <span class="k">AS</span> builder
+<span class="k">WORKDIR</span> /build
+
+<span class="c"># Cache des dépendances : copier d'abord pom.xml seul</span>
+<span class="k">COPY</span> pom.xml ./
+<span class="k">RUN</span> mvn -B dependency:go-offline --no-transfer-progress || true
+
+<span class="c"># Puis copier le code source et compiler</span>
+<span class="k">COPY</span> src ./src
+<span class="k">COPY</span> checkstyle.xml ./
+<span class="k">RUN</span> mvn -B package -DskipTests --no-transfer-progress
+
+<span class="c"># ===== Stage 2 : Runtime Tomcat =====</span>
+<span class="k">FROM</span> tomcat:10.1-jdk17-temurin <span class="k">AS</span> runtime
+
+<span class="k">LABEL</span> org.opencontainers.image.title=<span class="s">"BiblioGest"</span>
+
+<span class="c"># Nettoyage des webapps par défaut</span>
+<span class="k">RUN</span> rm -rf /usr/local/tomcat/webapps/*
+
+<span class="c"># Récupération du WAR depuis le stage builder</span>
+<span class="k">COPY</span> --from=builder /build/target/bibliotheque.war \
+                  /usr/local/tomcat/webapps/ROOT.war
+
+<span class="k">ENV</span> DB_URL=<span class="s">jdbc:oracle:thin:@oracle-xe:1521/XEPDB1</span> \
+    DB_USER=<span class="s">biblio</span> \
+    JAVA_OPTS=<span class="s">"-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"</span>
+
+<span class="c"># Installation de wget pour le healthcheck</span>
+<span class="k">RUN</span> apt-get update && apt-get install -y --no-install-recommends wget && \
+    rm -rf /var/lib/apt/lists/*
+
+<span class="c"># Utilisateur non-root pour la sécurité</span>
+<span class="k">RUN</span> groupadd -r tomcat && useradd -r -g tomcat tomcat && \
+    chown -R tomcat:tomcat /usr/local/tomcat
+<span class="k">USER</span> tomcat
+
+<span class="k">EXPOSE</span> 8080
+
+<span class="k">HEALTHCHECK</span> --interval=30s --timeout=10s --start-period=90s --retries=3 \
+    <span class="k">CMD</span> wget -qO- http://localhost:8080/api/livres >/dev/null 2>&1 || exit 1
+
+<span class="k">CMD</span> [<span class="s">"catalina.sh"</span>, <span class="s">"run"</span>]</code></pre>
+
+  <h2>7.3 Décortiquage instruction par instruction</h2>
+
+  <h3>Stage 1 — Builder</h3>
+  <ul>
+    <li><code>FROM maven:3.9-eclipse-temurin-17 AS builder</code> : image avec Maven + JDK17. <code>AS builder</code> nomme ce stage.</li>
+    <li><code>WORKDIR /build</code> : crée et entre dans <code>/build</code>.</li>
+    <li><code>COPY pom.xml ./</code> : on copie d'abord le POM seul.</li>
+    <li><code>RUN mvn dependency:go-offline</code> : télécharge toutes les dépendances. <strong>Cette couche est mise en cache</strong> si <code>pom.xml</code> ne change pas.</li>
+    <li><code>COPY src ./src</code> : maintenant on copie le code source.</li>
+    <li><code>RUN mvn package</code> : compile et produit le WAR.</li>
+  </ul>
+
+  <div class="callout tip">
+    <div class="callout-title">🎯 Astuce performance</div>
+    L'ordre <code>COPY pom.xml</code> → <code>RUN dependency</code> → <code>COPY src</code> permet à Docker de
+    réutiliser la couche des dépendances même si le code change. Sans cette astuce,
+    chaque modification du moindre fichier source re-téléchargerait toutes les
+    dépendances Maven.
+  </div>
+
+  <h3>Stage 2 — Runtime</h3>
+  <ul>
+    <li><code>FROM tomcat:10.1-jdk17-temurin</code> : base minimale (Tomcat + JDK, pas de Maven, pas de source).</li>
+    <li><code>RUN rm -rf /usr/local/tomcat/webapps/*</code> : supprime les webapps Tomcat par défaut.</li>
+    <li><code>COPY --from=builder ...</code> : copie <strong>uniquement</strong> le WAR depuis le stage 1. Le reste du stage 1 (Maven, source, .m2) est jeté.</li>
+    <li><code>USER tomcat</code> : exécution non-root → bonne pratique sécurité.</li>
+    <li><code>HEALTHCHECK</code> : vérifie l'app toutes les 30s. Docker reporte alors <code>healthy</code> ou <code>unhealthy</code>.</li>
+  </ul>
+
+  <h2>7.4 Sécurité — pourquoi USER non-root ?</h2>
+
+  <p>
+    Par défaut, un conteneur Docker tourne en root. Si un attaquant compromet
+    l'application, il a root <em>dans le conteneur</em>. Avec les capacités
+    Linux non isolées, certaines attaques permettent d'échapper au conteneur
+    et de compromettre l'hôte.
+  </p>
+
+  <p>
+    En passant en <code>USER tomcat</code>, on limite considérablement l'impact :
+    même une compromission applicative ne permet pas d'exécuter des opérations
+    privilégiées dans le conteneur.
+  </p>
+
+  <h2>7.5 Comparaison des tailles</h2>
+
+  <table>
+    <thead><tr><th>Approche</th><th>Taille image</th><th>Couches</th></tr></thead>
+    <tbody>
+      <tr><td>Single-stage avec Maven + JDK</td><td>~1.2 Go</td><td>~25</td></tr>
+      <tr><td>Multi-stage (notre Dockerfile)</td><td>~450 Mo</td><td>~18</td></tr>
+      <tr><td>Multi-stage Alpine</td><td>~250 Mo</td><td>~18</td></tr>
+    </tbody>
+  </table>
+
+</section>
+
+<!-- ============================================================
+     SECTION 8 — TESTS
+     ============================================================ -->
+<section class="section">
+  <div class="chapter-number">Chapitre 08</div>
+  <h1>Analyse des tests</h1>
+
+  <h2>8.1 Tests unitaires vs Tests d'intégration</h2>
+
+  <table>
+    <thead><tr><th>Critère</th><th>Test unitaire</th><th>Test d'intégration</th></tr></thead>
+    <tbody>
+      <tr><td>Scope</td><td>1 méthode / 1 classe</td><td>Plusieurs composants</td></tr>
+      <tr><td>Dépendances</td><td>Aucune externe</td><td>DB, réseau, ou mocks</td></tr>
+      <tr><td>Durée</td><td>Millisecondes</td><td>Secondes</td></tr>
+      <tr><td>Suffixe (notre projet)</td><td><code>*Test.java</code></td><td><code>*IT.java</code></td></tr>
+      <tr><td>Plugin Maven</td><td>Surefire</td><td>Failsafe</td></tr>
+      <tr><td>Phase Maven</td><td><code>test</code></td><td><code>integration-test → verify</code></td></tr>
+      <tr><td>Exemple</td><td><code>PasswordUtilTest</code></td><td><code>LivreResourceIT</code></td></tr>
+    </tbody>
+  </table>
+
+  <h2>8.2 Pourquoi utiliser Mockito ?</h2>
+
+  <p>
+    Sans Mockito, on devrait soit :
+  </p>
+  <ol>
+    <li>Démarrer Oracle dans la CI (lent et coûteux),</li>
+    <li>Tester avec H2 en mémoire (compatibilité Oracle limitée),</li>
+    <li>Écrire des stubs manuels (verbeux et fragile).</li>
+  </ol>
+
+  <p>Mockito permet de remplacer une dépendance par un objet qui se comporte comme on veut :</p>
+
+  <pre><code><span class="t">@ExtendWith</span>(MockitoExtension.class)
+<span class="k">class</span> <span class="t">LivreResourceIT</span> {
+
+    <span class="t">@Mock</span> <span class="t">LivreDao</span> dao;          <span class="c">// mock automatique</span>
+    <span class="t">LivreResource</span> resource;
+
+    <span class="t">@BeforeEach</span>
+    <span class="k">void</span> setUp() {
+        resource = <span class="k">new</span> <span class="t">LivreResource</span>(dao);   <span class="c">// injection via constructeur</span>
+    }
+
+    <span class="t">@Test</span>
+    <span class="k">void</span> getByIdInexistantRetourne404() {
+        when(dao.findByIdWithRelations(99L)).thenReturn(<span class="k">null</span>);  <span class="c">// scénario</span>
+        assertEquals(404, resource.getById(99L).getStatus());
+    }
+}</code></pre>
+
+  <p>Le mock répond exactement ce qu'on lui demande. Le test isole la couche REST.</p>
+
+  <h2>8.3 Pourquoi éviter Oracle dans la CI ?</h2>
+
+  <ul>
+    <li><strong>Lenteur</strong> : démarrage de 90s à 3 min, multiplié par chaque commit = file d'attente.</li>
+    <li><strong>Coût</strong> : Oracle est lourd en RAM (1-2 Go minimum).</li>
+    <li><strong>Flakiness</strong> : healthchecks parfois imparfaits, tests intermittents.</li>
+    <li><strong>Complexité</strong> : chargement schéma + données = code SQL fragile dans la pipeline.</li>
+  </ul>
+
+  <div class="callout info">
+    <div class="callout-title">💡 La règle</div>
+    Pour les tests <strong>de composant</strong> ou <strong>de service</strong>, on mocke les dépendances
+    externes. Pour les vrais <strong>tests bout-en-bout</strong> (end-to-end), on monte la stack
+    complète — mais on les exécute moins souvent (nightly, pas à chaque commit).
+  </div>
+
+  <h2>8.4 JaCoCo — comment ça marche ?</h2>
+
+  <p>
+    JaCoCo est un agent Java. Il <strong>instrumente le bytecode</strong> au runtime :
+    à chaque ligne, à chaque branche, à chaque méthode, il insère des compteurs.
+    Quand les tests tournent, il enregistre quelles lignes ont été exécutées.
+  </p>
+
+  <p>Configuration dans <code>pom.xml</code> :</p>
+  <pre><code>&lt;<span class="t">plugin</span>&gt;
+    &lt;<span class="t">groupId</span>&gt;org.jacoco&lt;/<span class="t">groupId</span>&gt;
+    &lt;<span class="t">artifactId</span>&gt;jacoco-maven-plugin&lt;/<span class="t">artifactId</span>&gt;
+    &lt;<span class="t">executions</span>&gt;
+        &lt;<span class="t">execution</span>&gt;
+            &lt;<span class="t">goals</span>&gt;&lt;<span class="t">goal</span>&gt;prepare-agent&lt;/<span class="t">goal</span>&gt;&lt;/<span class="t">goals</span>&gt;  <span class="c">&lt;!-- attache l'agent au JVM des tests --&gt;</span>
+        &lt;/<span class="t">execution</span>&gt;
+        &lt;<span class="t">execution</span>&gt;
+            &lt;<span class="t">id</span>&gt;report&lt;/<span class="t">id</span>&gt;
+            &lt;<span class="t">phase</span>&gt;verify&lt;/<span class="t">phase</span>&gt;
+            &lt;<span class="t">goals</span>&gt;&lt;<span class="t">goal</span>&gt;report&lt;/<span class="t">goal</span>&gt;&lt;/<span class="t">goals</span>&gt;     <span class="c">&lt;!-- génère target/site/jacoco --&gt;</span>
+        &lt;/<span class="t">execution</span>&gt;
+    &lt;/<span class="t">executions</span>&gt;
+&lt;/<span class="t">plugin</span>&gt;</code></pre>
+
+  <h2>8.5 Pourquoi notre couverture est faible (~8%)</h2>
+
+  <p>
+    Volontairement, on ne teste que la <strong>logique métier pure</strong>
+    (<code>PasswordUtil</code>, <code>BiblioUtils</code>) et l'API REST avec mocks.
+  </p>
+  <p>
+    On ne teste <em>pas</em> :
+  </p>
+  <ul>
+    <li>Les Servlets (couplage fort à HttpServletRequest/Response — difficile à mocker, faible valeur)</li>
+    <li>Les DAOs (nécessite Oracle, donc out-of-scope)</li>
+    <li>Les JSPs (frontend, hors champ unitaire)</li>
+  </ul>
+
+  <p>
+    Cette stratégie est cohérente avec le principe de la <strong>pyramide des tests</strong> :
+    beaucoup d'unitaires (rapides), quelques tests d'intégration (moyens), très peu
+    de tests end-to-end (lents).
+  </p>
+
+  <div class="ascii">
+                        ▲
+                       ╱ ╲          E2E
+                      ╱   ╲       (3-5 tests)
+                     ╱─────╲
+                    ╱       ╲     INTEGRATION
+                   ╱         ╲    (10-30 tests)
+                  ╱───────────╲
+                 ╱             ╲   UNITAIRES
+                ╱               ╲ (centaines)
+               ╱─────────────────╲
+  </div>
+
+</section>
+
+<!-- ============================================================
+     SECTION 9 — QUESTIONS DU PROF
+     ============================================================ -->
+<section class="section">
+  <div class="chapter-number">Chapitre 09</div>
+  <h1>50 questions du professeur + réponses</h1>
+
+  <p>
+    Voici les questions les plus probables d'un examinateur en module Gestion des
+    Projets IT, classées par thème. Chaque réponse est calibrée pour montrer une
+    vraie maîtrise du sujet.
+  </p>
+
+  <h2>📚 Bloc 1 — Concepts généraux CI/CD</h2>
+
+  <div class="qa-block">
+    <div class="qa-question">Quelle est la différence entre Continuous Integration, Continuous Delivery et Continuous Deployment ?</div>
+    <div class="qa-answer"><strong>CI</strong> = automatiser build + tests à chaque push. <strong>CD</strong> (Delivery) = l'artefact est <em>prêt</em> à déployer après chaque pipeline réussie, mais le déploiement reste manuel. <strong>CD</strong> (Deployment) = le déploiement en production est lui aussi automatique. Notre projet est en mode Continuous Delivery : on publie l'image Docker, mais on n'a pas de cluster qui la consomme automatiquement.</div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Quels sont les bénéfices business du CI/CD ?</div>
+    <div class="qa-answer">Time-to-market réduit (livraisons quotidiennes vs trimestrielles), feedback client plus rapide, qualité accrue par tests automatiques, réduction du coût de correction des bugs (×100 si détecté en prod vs CI), responsabilisation des équipes, audit trail complet via Git + pipeline.</div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Quels sont les piliers du DevOps ?</div>
+    <div class="qa-answer">Le modèle CALMS : <strong>C</strong>ulture (équipes Dev + Ops fusionnées), <strong>A</strong>utomation (CI/CD, IaC), <strong>L</strong>ean (élimination du gaspillage), <strong>M</strong>easurement (métriques DORA), <strong>S</strong>haring (transparence, partage de connaissances).</div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Quelles sont les métriques DORA et que mesurez-vous dans votre projet ?</div>
+    <div class="qa-answer">Les 4 métriques DORA : <em>Deployment Frequency</em>, <em>Lead Time for Changes</em>, <em>Change Failure Rate</em>, <em>Mean Time to Restore</em>. Dans notre projet, on peut mesurer la fréquence de déploiement (un push = une image publiée) et le lead time (4-5 min entre push et notification Slack).</div>
+  </div>
+
+  <h2>🛠️ Bloc 2 — Outils CI/CD</h2>
+
+  <div class="qa-block">
+    <div class="qa-question">Pourquoi avoir choisi GitHub Actions comme outil principal ?</div>
+    <div class="qa-answer">Quatre raisons : (1) intégration native avec notre dépôt GitHub, zéro configuration de webhook, (2) marketplace de 21 000+ actions évite de réécrire des scripts, (3) gratuit illimité pour les repos publics, (4) syntaxe YAML lisible. On a aussi implémenté GitLab CI, Jenkins, CircleCI et Travis CI pour démontrer la portabilité conceptuelle.</div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Quelle est la différence entre les <em>stages</em> de GitLab et les <em>needs</em> de GitHub Actions ?</div>
+    <div class="qa-answer">GitLab utilise un modèle <strong>séquentiel</strong> : tous les jobs d'un stage tournent en parallèle, et le stage suivant attend la fin du précédent. GitHub Actions utilise un modèle <strong>DAG</strong> (Directed Acyclic Graph) plus flexible : chaque job déclare ses dépendances individuelles via <code>needs:</code>, ce qui permet des graphes arbitraires. Notre <code>quality</code> et <code>package</code> dépendent de <code>test</code> mais s'exécutent en parallèle.</div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Pourquoi Jenkins est-il considéré comme "l'ancêtre" mais toujours utilisé ?</div>
+    <div class="qa-answer">Jenkins date de 2011, c'est le pionnier. Il est toujours utilisé en entreprise pour deux raisons : (1) <strong>self-hosted par nature</strong>, idéal quand les données ne peuvent pas quitter l'infra interne (banques, défense), (2) écosystème de 1 900+ plugins permet l'intégration avec n'importe quel outil legacy (LDAP, AD, JIRA). En contrepartie, courbe d'apprentissage élevée (Groovy DSL) et maintenance lourde.</div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Quelle est la différence entre SonarCloud et SonarQube ?</div>
+    <div class="qa-answer">Même moteur d'analyse, deux modes de déploiement. <strong>SonarCloud</strong> est la version SaaS hébergée par SonarSource, gratuite pour les repos publics OSS, zéro maintenance. <strong>SonarQube Community</strong> est gratuit et auto-hébergé — pertinent quand le code est confidentiel. On a démontré les deux modes dans le projet via <code>docker-compose.sonarqube.yml</code>.</div>
+  </div>
+
+  <h2>🐳 Bloc 3 — Docker</h2>
+
+  <div class="qa-block">
+    <div class="qa-question">Pourquoi utiliser un Dockerfile multi-stage ?</div>
+    <div class="qa-answer">Pour <strong>séparer build et runtime</strong>. Le stage builder contient Maven + JDK + source code (≈1 Go), nécessaire pour compiler. Le stage runtime ne contient que Tomcat + le WAR (≈450 Mo). On <em>jette</em> le builder à la fin. Résultat : image deux fois plus petite, surface d'attaque réduite, pull plus rapide.</div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Qu'est-ce qu'une couche (layer) Docker ?</div>
+    <div class="qa-answer">Une couche est l'unité de stockage immutable d'une image Docker. Chaque instruction du Dockerfile (<code>RUN</code>, <code>COPY</code>, etc.) crée une nouvelle couche. Les couches sont stackées en <strong>UnionFS</strong>. Avantages : déduplication entre images, cache lors du rebuild, transfert partiel sur push/pull. Le tag final est en fait un manifest qui pointe vers une liste de couches.</div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Pourquoi exécuter le conteneur sous un utilisateur non-root ?</div>
+    <div class="qa-answer">Par défaut, un conteneur tourne en root. En cas de compromission applicative, l'attaquant a root <em>dans le conteneur</em>. Avec certaines erreurs de configuration (capabilities Linux, montage Docker socket), il peut <em>échapper</em> au conteneur et compromettre l'hôte. En passant en <code>USER tomcat</code>, on limite l'impact même en cas de breach.</div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Pourquoi avoir 2 registres (Docker Hub + GHCR) ?</div>
+    <div class="qa-answer">Trois raisons : (1) <strong>redondance</strong> — si Docker Hub a un incident, GHCR reste accessible, (2) <strong>simplicité d'auth</strong> sur GHCR via <code>GITHUB_TOKEN</code> auto-généré, (3) Docker Hub a des <em>pull rate limits</em> sur le plan gratuit (100 pulls/6h pour les anonymes). GHCR n'en a pas.</div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Comment fonctionne le cache Docker Buildx via GitHub Actions ?</div>
+    <div class="qa-answer"><code>cache-from: type=gha</code> télécharge les layers du cache GitHub Actions, <code>cache-to: type=gha,mode=max</code> les ré-upload après le build. Cela réduit le build de ~2 min à ~30 s sur des changements mineurs. Le cache est invalidé si <code>pom.xml</code> change (nouvelle couche de dépendances).</div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Quel est le rôle de docker-compose dans votre projet ?</div>
+    <div class="qa-answer">Docker Compose orchestre Oracle XE + l'app en local pour le développement et la démo. La directive <code>depends_on.condition: service_healthy</code> garantit que l'app attend que la PDB Oracle soit prête avant de démarrer. On a aussi un second fichier <code>docker-compose.sonarqube.yml</code> pour la démo SonarQube self-hosted.</div>
+  </div>
+
+  <h2>🧪 Bloc 4 — Tests &amp; Qualité</h2>
+
+  <div class="qa-block">
+    <div class="qa-question">Quelle est la pyramide des tests ?</div>
+    <div class="qa-answer">Modèle popularisé par Mike Cohn : beaucoup de tests unitaires (rapides, isolés) à la base, moins de tests d'intégration au milieu, très peu de tests end-to-end au sommet (lents, fragiles). Notre projet respecte ce principe : 15 tests unitaires, 6 tests d'intégration mockés, 0 test E2E (couvert par démo manuelle).</div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Pourquoi ne pas démarrer Oracle dans la CI ?</div>
+    <div class="qa-answer">Oracle XE met 90 secondes à 3 minutes pour démarrer. Multiplié par chaque commit, c'est inacceptable. On utilise donc <strong>Mockito</strong> pour remplacer les DAOs par des mocks. La logique métier pure (<code>BiblioUtils</code>) ne dépend pas du tout de la DB. C'est une application directe du principe d'architecture hexagonale : isoler la logique métier des détails techniques.</div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Comment fonctionne Mockito techniquement ?</div>
+    <div class="qa-answer">Mockito utilise la réflexion Java + la génération de bytecode (via ByteBuddy) pour créer une sous-classe dynamique de l'interface ou classe à mocker. Les méthodes du mock retournent des valeurs <em>stubées</em> via la syntaxe <code>when().thenReturn()</code>. On peut aussi vérifier les appels avec <code>verify()</code>.</div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Quelle est la différence entre Surefire et Failsafe ?</div>
+    <div class="qa-answer">Deux plugins Maven jumeaux. <strong>Surefire</strong> exécute les fichiers <code>*Test.java</code> pendant la phase <code>test</code>. <strong>Failsafe</strong> exécute les fichiers <code>*IT.java</code> pendant la phase <code>integration-test → verify</code>. La différence clé : Failsafe ne fait pas échouer immédiatement la build sur un test raté — il poursuit jusqu'à <code>verify</code> qui collecte les résultats. Cela permet d'exécuter des nettoyages post-test (arrêt de serveurs, etc.).</div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Comment JaCoCo mesure-t-il la couverture ?</div>
+    <div class="qa-answer">JaCoCo attache un <em>agent JVM</em> au processus des tests. Cet agent instrumente le bytecode à la volée : il insère des compteurs à chaque ligne, branche, méthode, classe. Quand les tests s'exécutent, il enregistre les compteurs incrémentés. À la fin, il génère un rapport XML et HTML détaillant ce qui a été exécuté.</div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Que mesure SonarCloud exactement ?</div>
+    <div class="qa-answer">Six métriques principales : <strong>Bugs</strong> (erreurs avérées), <strong>Vulnerabilities</strong> (failles sécurité OWASP/CWE), <strong>Security Hotspots</strong> (à revoir manuellement), <strong>Code Smells</strong> (dette technique), <strong>Coverage</strong> (consommée depuis JaCoCo), <strong>Duplications</strong>. Sonar applique 600+ règles classifiées Reliability / Maintainability / Security.</div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Qu'est-ce qu'un Quality Gate ?</div>
+    <div class="qa-answer">C'est un ensemble de seuils que le code doit respecter pour passer. Exemple : "coverage >= 80% sur le nouveau code, 0 bug critique, 0 hotspot non revu". Le QG retourne PASSED ou FAILED. En CI/CD strict, un FAILED peut bloquer le merge de la PR.</div>
+  </div>
+
+  <h2>🔐 Bloc 5 — Sécurité</h2>
+
+  <div class="qa-block">
+    <div class="qa-question">Comment GitHub stocke-t-il les secrets ?</div>
+    <div class="qa-answer">Chiffrement asymétrique : (1) côté navigateur, la valeur est chiffrée avec la <em>clé publique</em> du repo avant l'envoi, (2) GitHub stocke uniquement la version chiffrée, (3) au runtime, le runner déchiffre <em>juste-à-temps</em>. GitHub masque aussi automatiquement toute valeur secrète qui apparaîtrait dans les logs avec <code>***</code>. C'est conforme au principe Zero Trust.</div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Que faire si un secret fuite ?</div>
+    <div class="qa-answer">Rotation immédiate : (1) révoquer le token compromis, (2) en générer un nouveau, (3) mettre à jour le secret dans GitHub. <em>D'abord rotation, ensuite enquête</em>. Ne jamais penser "ce n'était que dans tel canal privé" — un secret exposé doit être considéré comme cassé.</div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">À quoi sert Trivy ?</div>
+    <div class="qa-answer">Trivy scanne les images Docker à la recherche de CVE connues : paquets OS (Alpine, Debian), dépendances Java/Node/Python, mauvaises configurations, secrets accidentellement intégrés. Complémentaire à SonarCloud (qui regarde le code source) : Trivy regarde l'image livrée. Format SARIF standard intégré à GitHub Security.</div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Qu'est-ce qu'une CVE ?</div>
+    <div class="qa-answer">Common Vulnerabilities and Exposures. Identifiant standard d'une faille de sécurité publique, format <code>CVE-YYYY-NNNNN</code>. Maintenu par MITRE. Chaque CVE a un score CVSS de 0 à 10 qui mesure sa criticité. Exemple : CVE-2021-44228 (Log4Shell) score 10/10.</div>
+  </div>
+
+  <h2>🚀 Bloc 6 — Pipeline &amp; Workflow</h2>
+
+  <div class="qa-block">
+    <div class="qa-question">Pourquoi le job <code>quality</code> ne tourne que sur main ?</div>
+    <div class="qa-answer">SonarCloud a un quota limité sur le plan gratuit. Faire une analyse à chaque push sur develop, à chaque PR, exploserait le quota. Donc on limite à <code>main</code> via <code>if: github.ref == 'refs/heads/main'</code>. Sur les autres branches, on garde lint + test (rapides et gratuits).</div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Que se passe-t-il si un job échoue ?</div>
+    <div class="qa-answer">Par défaut, GitHub Actions stoppe les jobs qui dépendent du job raté. Mais ici, le job <code>notify</code> a <code>if: always()</code>, donc il s'exécute <em>quoi qu'il arrive</em> — succès ou échec. C'est crucial pour la <em>fail fast</em> philosophy : on veut être notifié <em>surtout</em> en cas d'échec.</div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Comment fonctionne le cache Maven dans GitHub Actions ?</div>
+    <div class="qa-answer">L'action <code>actions/setup-java@v4</code> avec <code>cache: maven</code> sauvegarde le répertoire <code>~/.m2/repository</code> entre les runs. La clé de cache est calculée à partir du hash de <code>pom.xml</code>. Si le POM ne change pas, le cache est réutilisé — réduisant la durée du job de ~60s à ~8s pour la phase de résolution des dépendances.</div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Quel est le rôle du fichier <code>pom.xml</code> ?</div>
+    <div class="qa-answer">C'est le <strong>POM (Project Object Model)</strong> Maven. Il déclare : (1) les coordonnées du projet (groupId, artifactId, version), (2) les dépendances (Jakarta, Hibernate, etc.), (3) les plugins Maven (surefire, failsafe, jacoco, sonar, checkstyle, spotbugs), (4) le packaging (war). C'est l'équivalent de <code>package.json</code> pour Node ou <code>requirements.txt</code> pour Python.</div>
+  </div>
+
+  <h2>💡 Bloc 7 — Choix techniques</h2>
+
+  <div class="qa-block">
+    <div class="qa-question">Pourquoi Java 17 plutôt que Java 21 ?</div>
+    <div class="qa-answer">Java 17 est la version LTS la plus largement adoptée en entreprise (release 2021, support jusqu'en 2029). Java 21 (release 2023) commence à se déployer mais Tomcat 10.1 ciblait initialement Java 17. Choix de stabilité plutôt que de bleeding edge.</div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Pourquoi Oracle plutôt que PostgreSQL ?</div>
+    <div class="qa-answer">Choix historique du projet BiblioGest. Pour la CI, ce détail n'a aucun impact puisqu'on mocke les DAOs. Pour un nouveau projet on prendrait PostgreSQL : open source, plus léger, supporté nativement par Hibernate sans Oracle XE container.</div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Pourquoi avoir laissé Checkstyle/SpotBugs en mode informational ?</div>
+    <div class="qa-answer">Le code applicatif existait avant l'ajout du lint — il contient 177 violations Checkstyle. Rendre le lint bloquant aurait nécessité un refactoring massif hors périmètre du sujet. On a donc choisi le mode <em>informational</em> : les violations sont rapportées en artifact, mais ne bloquent pas le pipeline. C'est une décision pragmatique qu'on documente clairement dans le rapport.</div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Pourquoi avoir implémenté 5 pipelines au lieu d'une seule ?</div>
+    <div class="qa-answer">Le sujet du module demandait explicitement de "comparer les principes des moteurs CI/CD" et "adapter la même logique sur plusieurs outils pour comprendre les différences de syntaxe et de fonctionnement". Avoir GitHub Actions, GitLab, Jenkins, CircleCI et Travis CI prouve qu'on a compris les concepts communs (jobs, triggers, secrets) et les spécificités de chacun (Groovy vs YAML, stages vs DAG, etc.).</div>
+  </div>
+
+  <h2>🐛 Bloc 8 — Problèmes &amp; debugging</h2>
+
+  <div class="qa-block">
+    <div class="qa-question">Quelles ont été les principales difficultés ?</div>
+    <div class="qa-answer">Six difficultés majeures : (1) tests sans base de données → résolu avec Mockito + extraction de la logique pure, (2) bug pré-existant constructor package-private → constructeur public, (3) commentaires inline SQL ignorés par sqlplus → suppression des commentaires, (4) bloc <code>env:</code> dupliqué en YAML → fusionné, (5) version Trivy 0.24.0 retirée du marketplace → pin sur master, (6) port 8080 occupé sur le poste → remappé sur 8081.</div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Comment debugger une pipeline qui échoue ?</div>
+    <div class="qa-answer">Méthodologie en 5 étapes : (1) lire le message d'erreur exact dans l'UI Actions, (2) identifier le step précis qui rate, (3) reproduire localement la même commande (<code>mvn checkstyle:check</code>), (4) si reproductible : fix local + push ; si non reproductible : différence d'environnement (variables, OS, versions), (5) ajouter <code>echo</code> dans la pipeline pour clarifier l'état.</div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Pourquoi le <em>Invalid workflow file: env is already defined</em> ?</div>
+    <div class="qa-answer">YAML interdit deux clés identiques au même niveau. On avait défini <code>env:</code> deux fois dans le même step Slack. Quand le YAML est invalide, GitHub Actions refuse <em>entièrement</em> de parser le fichier — c'est pourquoi tous les jobs apparaissaient en "failure" sans même tourner. Fix : fusionner les deux blocs en un seul.</div>
+  </div>
+
+  <h2>🏗️ Bloc 9 — Architecture</h2>
+
+  <div class="qa-block">
+    <div class="qa-question">Comment scalez-vous le pipeline si l'équipe grossit ?</div>
+    <div class="qa-answer">Plusieurs leviers : (1) <em>self-hosted runners</em> sur des machines plus puissantes, (2) parallélisation des tests via <code>matrix</code> strategy, (3) cache plus agressif (sccache pour C++, Turbo pour monorepos JS), (4) split en plusieurs workflows (CI rapide pour PR, CI complet la nuit), (5) déplacement des tests E2E en pipeline séparée déclenchée par cron.</div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Si vous deviez ajouter le déploiement automatique en prod, comment feriez-vous ?</div>
+    <div class="qa-answer">Ajouter un 8ème job <code>deploy</code> conditionné à <code>main</code> qui : (1) authentifie sur le cluster Kubernetes (kubeconfig stocké en secret), (2) applique un manifest Helm/Kustomize, (3) attend la stabilité via <code>kubectl rollout status</code>, (4) lance un smoke test sur l'URL de prod, (5) rollback automatique en cas d'échec. On déclencherait via un tag git (<code>v1.2.3</code>) plutôt que push pour avoir un contrôle manuel.</div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Comment géreriez-vous plusieurs environnements (dev, staging, prod) ?</div>
+    <div class="qa-answer">Utiliser les <strong>GitHub Environments</strong> : on définit dev, staging, prod, chacun avec ses propres secrets (DB_URL différentes, tokens différents). On peut ajouter des <em>required reviewers</em> avant déploiement en prod (4-eyes principle). Le workflow utilise alors <code>environment: production</code> pour cibler le bon set de secrets.</div>
+  </div>
+
+  <h2>🎯 Bloc 10 — Vision stratégique</h2>
+
+  <div class="qa-block">
+    <div class="qa-question">Quelle est la limite principale de votre pipeline actuelle ?</div>
+    <div class="qa-answer">Trois limites : (1) pas de tests E2E réels (pas de stack complète démarrée), (2) pas de déploiement automatique en prod (pipeline arrêté à la publication d'image), (3) couverture de code faible (~8%) — nécessiterait du test sur les Servlets et DAOs avec Testcontainers.</div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Comment justifiez-vous l'investissement initial en CI/CD ?</div>
+    <div class="qa-answer">Le ROI se calcule en 3 axes : (1) <em>réduction des bugs en prod</em> (coût ×100 vs CI), (2) <em>gain de temps des développeurs</em> (pas de tests manuels répétitifs), (3) <em>amélioration du time-to-market</em>. Le setup initial (1-2 semaines/dev) est rentabilisé en quelques mois sur un projet actif. Référence : étude DORA "Accelerate" — les équipes haute performance déploient 200× plus vite avec 7× moins d'échecs.</div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Quelles sont les évolutions futures envisagées ?</div>
+    <div class="qa-answer">Court terme : passer en Continuous Deployment vers un cluster K8s, ajouter des tests E2E via Playwright, intégrer Renovate pour le bump auto des dépendances. Moyen terme : observabilité (Prometheus, Grafana, OpenTelemetry), feature flags (LaunchDarkly), GitOps via ArgoCD. Long terme : matrix builds multi-Java (17 + 21), tests de charge automatisés via k6 ou Gatling.</div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Quel est selon vous le rôle principal d'un ingénieur DevOps ?</div>
+    <div class="qa-answer">Outiller les équipes pour qu'elles soient autonomes — pas faire les déploiements à leur place. Un bon DevOps construit des plateformes self-service (Internal Developer Platform), automatise les chemins répétitifs, encode les bonnes pratiques de sécurité et conformité dans les pipelines. Il évangélise la culture du "vous le construisez, vous le runnez" (Werner Vogels, Amazon).</div>
+  </div>
+
+  <h2>🔍 Bloc 11 — Vocabulaire technique</h2>
+
+  <div class="qa-block">
+    <div class="qa-question">Qu'est-ce que l'<em>Infrastructure as Code</em> ?</div>
+    <div class="qa-answer">Décrire l'infrastructure (serveurs, réseaux, services) sous forme de fichiers texte versionnés, plutôt que via une UI cloud. Avantages : reproductibilité, revue de code, rollback, audit. Outils : Terraform, Pulumi, AWS CloudFormation, Ansible. Notre <code>Dockerfile</code> + <code>docker-compose.yml</code> sont des formes simples d'IaC.</div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Qu'est-ce que le <em>shift-left security</em> ?</div>
+    <div class="qa-answer">Déplacer les contrôles de sécurité vers le début du cycle de vie logiciel — autrement dit dans la pipeline CI/CD plutôt qu'en audit annuel. Concrètement : SAST (SonarCloud), SCA (Dependabot, Snyk), container scan (Trivy), secret scanning (GitHub Advanced Security). Notre pipeline implémente shift-left avec lint + Sonar + Trivy.</div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Qu'est-ce qu'un <em>artifact registry</em> et pourquoi est-ce critique ?</div>
+    <div class="qa-answer">Un registre stocke les artefacts construits par la CI : images Docker, paquets npm, JARs Maven, etc. C'est critique car : (1) il garantit la reproductibilité (même version = même artefact), (2) il découple build et déploiement (on peut redéployer une vieille version), (3) il centralise les CVE scans (Trivy lit depuis le registry).</div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Qu'est-ce que le <em>GitOps</em> ?</div>
+    <div class="qa-answer">Paradigme où Git est la source de vérité unique pour l'infrastructure ET le déploiement. Un opérateur (ArgoCD, Flux) surveille un repo Git contenant les manifests Kubernetes et applique automatiquement les changements au cluster. Avantages : audit complet, rollback = git revert, accès limité au cluster (seul l'opérateur push).</div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Qu'est-ce qu'un <em>service mesh</em> ?</div>
+    <div class="qa-answer">Couche d'infrastructure qui gère la communication service-à-service (load balancing, retry, circuit breaker, mTLS, observability) sans toucher au code applicatif. Implémentations : Istio, Linkerd, Consul Connect. Pas pertinent pour notre projet monolithique, mais essentiel pour les architectures microservices.</div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Qu'est-ce que la <em>supply chain security</em> ?</div>
+    <div class="qa-answer">Sécurisation de toute la chaîne logistique du logiciel : dépendances OSS, images de base Docker, actions de CI/CD, registres. Risques majeurs : dependency confusion (npm), compromission de mainteneur, image base avec backdoor. Bonnes pratiques : pin sur SHA, SBOM (Software Bill of Materials), signature d'artefacts (Cosign), scan continu (Trivy, Snyk).</div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Que signifie le terme <em>immutable infrastructure</em> ?</div>
+    <div class="qa-answer">Une infrastructure n'est jamais modifiée après son déploiement. Pour mettre à jour, on déploie une nouvelle version et on détruit l'ancienne — pas de <code>ssh + apt-get upgrade</code>. Avantages : prédictibilité, rollback simple, pas de drift de config. Les conteneurs Docker incarnent ce principe.</div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Pourquoi <em>fail fast</em> est-il important ?</div>
+    <div class="qa-answer">Échouer au plus tôt évite de gâcher du temps et des ressources. Dans notre pipeline, lint tourne en premier (15s) — s'il y a un défaut de style, on le sait avant les 2 min de tests. La construction Docker (3 min) ne démarre que si tout le reste a passé. C'est l'optimisation Pareto : on attrape 80% des défauts dans les 20% premiers seconds.</div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-question">Quelle est la différence entre <em>monorepo</em> et <em>polyrepo</em> ?</div>
+    <div class="qa-answer"><strong>Monorepo</strong> : tout le code dans un seul repo Git (Google, Meta, Microsoft, Uber). <strong>Polyrepo</strong> : un repo par service/composant. Notre projet est polyrepo (un seul service donc trivialement). Monorepo facilite refactoring transverse et atomic commits, polyrepo facilite ownership et autonomie d'équipe.</div>
+  </div>
+
+</section>
+
+<!-- ============================================================
+     SECTION 10 — CONSEILS SOUTENANCE
+     ============================================================ -->
+<section class="section">
+  <div class="chapter-number">Chapitre 10</div>
+  <h1>Conseils de soutenance</h1>
+
+  <h2>10.1 Comment introduire le projet</h2>
+
+  <div class="callout quote">
+    <div class="callout-title">Phrase d'ouverture suggérée</div>
+    "Le DevOps moderne repose sur l'automatisation totale entre le commit et la
+    production. Notre projet matérialise cette philosophie en appliquant une
+    pipeline CI/CD complète à une application Jakarta EE existante — BiblioGest.
+    L'objectif n'était pas tant l'application elle-même que la chaîne
+    d'automatisation qui l'entoure. Nous allons vous démontrer comment, à partir
+    d'un simple <code>git push</code>, sept étapes s'enchaînent automatiquement :
+    lint, tests, qualité, packaging, containerisation, scan de sécurité, et
+    notification d'équipe."
+  </div>
+
+  <h2>10.2 Vocabulaire pro à utiliser</h2>
+
+  <table>
+    <thead><tr><th>Évitez</th><th>Préférez</th></tr></thead>
+    <tbody>
+      <tr><td>"le truc qui teste"</td><td>"le job de tests unitaires exécuté par Surefire"</td></tr>
+      <tr><td>"on a mis ça sur Docker"</td><td>"on a containerisé l'application avec un Dockerfile multi-stage"</td></tr>
+      <tr><td>"le pipeline tourne"</td><td>"le workflow est déclenché par l'événement push"</td></tr>
+      <tr><td>"on a mis un secret"</td><td>"nous avons stocké le token chiffré dans le vault GitHub Secrets"</td></tr>
+      <tr><td>"ça analyse le code"</td><td>"SonarCloud applique 600+ règles d'analyse statique"</td></tr>
+      <tr><td>"on regarde les bugs"</td><td>"Trivy scanne l'image à la recherche de CVE avec score CVSS"</td></tr>
+    </tbody>
+  </table>
+
+  <h2>10.3 Pendant la démo live</h2>
+
+  <ol>
+    <li><strong>Présentation du contexte (1 min)</strong> — affichez la slide architecture pipeline.</li>
+    <li><strong>Présentation du code (2 min)</strong> — ouvrez VS Code sur <code>.github/workflows/ci-cd.yml</code>, faites défiler les 7 jobs.</li>
+    <li><strong>Trigger live (1 min)</strong> — modifiez une ligne de README, commit + push, basculez sur l'onglet Actions.</li>
+    <li><strong>Observation des 7 jobs (4-5 min)</strong> — commentez chaque job qui passe au vert. Préparez les phrases pour chacun.</li>
+    <li><strong>Démonstration des outputs (3 min)</strong> — basculez vers SonarCloud, Docker Hub, GHCR, Slack (si configuré), localhost:8081.</li>
+    <li><strong>Synthèse + Q&amp;A (2-5 min)</strong>.</li>
+  </ol>
+
+  <h2>10.4 Erreurs à éviter absolument</h2>
+
+  <div class="callout danger">
+    <div class="callout-title">❌ Ne dites pas...</div>
+    <ul>
+      <li>"On a copié de Stack Overflow" → dites plutôt "nous nous sommes inspirés des bonnes pratiques de la communauté".</li>
+      <li>"Je ne sais pas pourquoi ça marche" → si vous ne savez pas, dites "c'est une excellente question, je peux vous montrer dans la documentation officielle".</li>
+      <li>"C'est juste un projet d'école" → dites "c'est un projet pédagogique mais qui applique les standards de l'industrie".</li>
+      <li>"Le prof n'a pas demandé X" → si X est manquant, dites "X est une évolution future identifiée dans notre rapport".</li>
+    </ul>
+  </div>
+
+  <h2>10.5 Anti-stress : que faire si...</h2>
+
+  <table>
+    <thead><tr><th>Situation</th><th>Réaction</th></tr></thead>
+    <tbody>
+      <tr><td>Internet meurt pendant la démo</td><td>"Permettez-moi de vous montrer la vidéo enregistrée d'un run précédent" — lancez le backup OBS</td></tr>
+      <tr><td>GitHub Actions est lent</td><td>"En attendant que ce job se termine, je vais vous montrer le code source qui l'exécute" — basculez sur VS Code</td></tr>
+      <tr><td>Une question vous prend de court</td><td>"C'est une excellente question — je n'ai pas la réponse exacte mais voici comment j'aborderais le problème : [raisonnement à voix haute]"</td></tr>
+      <tr><td>Le pipeline rate pendant la démo</td><td>Restez calme, dites "Voilà un parfait exemple de ce que la CI nous évite : sans elle, ce bug serait parti en production. Le rapport d'erreur me dit que..."</td></tr>
+      <tr><td>Le prof remet en cause un choix technique</td><td>"Vous avez raison de soulever ce point — nous avons choisi X plutôt que Y parce que [raison concrète]. Dans un contexte différent, Y serait effectivement plus pertinent."</td></tr>
+    </tbody>
+  </table>
+
+  <h2>10.6 Comment parler comme un ingénieur DevOps</h2>
+
+  <ol>
+    <li><strong>Toujours quantifier</strong> : "21 tests, 4-5 min de pipeline, ~250 Mo d'image, 177 violations Checkstyle".</li>
+    <li><strong>Justifier les trade-offs</strong> : "On a choisi X au détriment de Y parce que [contrainte]".</li>
+    <li><strong>Mentionner les standards de l'industrie</strong> : "C'est conforme au principe de Zero Trust / 12-Factor App / GitOps / DORA".</li>
+    <li><strong>Distinguer théorie et pratique</strong> : "En théorie X, mais dans notre contexte spécifique on a fait Y".</li>
+    <li><strong>Reconnaître les limites</strong> : "Cette approche atteint ses limites quand [scénario], on évoluerait alors vers [solution]".</li>
+  </ol>
+
+  <h2>10.7 Phrase de clôture</h2>
+
+  <div class="callout quote">
+    <div class="callout-title">Suggestion</div>
+    "En résumé, notre projet démontre trois apprentissages clés : <strong>premièrement</strong>,
+    la testabilité conditionne la rapidité de la CI/CD — c'est l'architecture du
+    code qui détermine la durée de la pipeline. <strong>Deuxièmement</strong>, les concepts
+    CI/CD sont portables : la même logique fonctionne sur GitHub Actions, GitLab,
+    Jenkins, CircleCI ou Travis CI, seule la syntaxe diffère. <strong>Troisièmement</strong>,
+    une pipeline n'est pas une fin en soi — sa valeur dépend de la culture
+    d'équipe qui la nourrit. Un pipeline ignoré n'offre qu'une illusion de
+    rigueur. Avez-vous des questions ?"
+  </div>
+
+  <h2>10.8 Checklist finale avant le jour J</h2>
+
+  <ul>
+    <li>☐ Vidéo OBS de backup enregistrée (4-5 min)</li>
+    <li>☐ 10 screenshots clés intégrés dans la présentation PowerPoint</li>
+    <li>☐ Pipeline GitHub Actions vérifiée verte sur tous les jobs</li>
+    <li>☐ Docker Desktop installé et démarré 1h avant</li>
+    <li>☐ <code>docker compose up -d</code> fonctionne (app sur localhost:8081)</li>
+    <li>☐ Onglets navigateur pré-ouverts (GitHub, Actions, SonarCloud, Docker Hub, Slack, localhost:8081)</li>
+    <li>☐ Téléphone en partage de connexion (backup réseau)</li>
+    <li>☐ Câble HDMI testé sur le projecteur</li>
+    <li>☐ Mode Ne Pas Déranger activé</li>
+    <li>☐ Notifications Slack/Discord/mail coupées</li>
+    <li>☐ PC sur secteur, batterie chargée à 100%</li>
+    <li>☐ README.md prêt à être modifié (savoir EXACTEMENT quelle ligne ajouter)</li>
+    <li>☐ Message de commit pré-rédigé dans un .txt sur le bureau</li>
+    <li>☐ Bouteille d'eau à portée de main</li>
+    <li>☐ Cette page imprimée à côté de vous comme aide-mémoire</li>
+  </ul>
+
+</section>
+
+<div class="page-break"></div>
+
+<section>
+  <h1 style="text-align: center; color: #6d28d9; margin-top: 4rem;">Bonne soutenance ! 🎓</h1>
+  <p style="text-align: center; font-style: italic; color: #64748b; margin-top: 1rem;">
+    Document préparé pour la défense du projet<br>
+    <strong>Pipeline CI/CD Moderne Multi-Outils</strong><br>
+    Module Gestion des Projets IT — Année 2025–2026<br>
+    Benoujeddi Amine &amp; Habbass Achraf
+  </p>
+</section>
+
+</div>
+
+</body>
+</html>
