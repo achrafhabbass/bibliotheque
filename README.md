@@ -161,3 +161,4 @@ src/main/java/ma/bibliotheque/
 - Les cookies de session sont `HttpOnly`.
 
 Readme file 
+Presentation date: 21.05.2026
